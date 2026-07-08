@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-bg-900 font-sans text-[#F4F4F8] antialiased;
+  background-image:
+    radial-gradient(60rem 60rem at 8% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
+    radial-gradient(50rem 50rem at 112% 8%, rgba(168, 85, 247, 0.16), transparent 55%),
+    radial-gradient(42rem 42rem at 50% 122%, rgba(139, 92, 246, 0.12), transparent 60%);
+  background-attachment: fixed;
+}
+
+@layer components {
+  .glass {
+    @apply rounded-2xl border border-white/10 bg-white/5 shadow-[0_8px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl;
+  }
+
+  .glass-soft {
+    @apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-md;
+  }
+
+  .glass-input {
+    @apply w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[#F4F4F8] outline-none transition placeholder:text-[#C7C7D1]/50 focus:border-brand-violet/60 focus:ring-2 focus:ring-brand-violet/20;
+  }
+
+  .label-text {
+    @apply mb-2 block text-sm font-medium text-[#C7C7D1];
+  }
+}
+
+/* 自定义滑块外观 */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  cursor: pointer;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25);
+  transition: transform 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  cursor: pointer;
+}
+
+/* 细滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
