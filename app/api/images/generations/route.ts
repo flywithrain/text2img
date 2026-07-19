@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateImage } from "@/lib/stepfun";
 import { STEP_MODEL } from "@/lib/types";
+import {
+  getSessionUserFromRequest,
+  unauthorized,
+} from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +14,9 @@ function clamp(v: number, min: number, max: number) {
 }
 
 export async function POST(req: NextRequest) {
+  const user = getSessionUserFromRequest(req);
+  if (!user) return unauthorized();
+
   let body: any;
   try {
     body = await req.json();

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { editImage } from "@/lib/stepfun";
+import {
+  getSessionUserFromRequest,
+  unauthorized,
+} from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +16,9 @@ function getNum(form: FormData, key: string): number | undefined {
 }
 
 export async function POST(req: NextRequest) {
+  const user = getSessionUserFromRequest(req);
+  if (!user) return unauthorized();
+
   let form: FormData;
   try {
     form = await req.formData();

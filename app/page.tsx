@@ -9,6 +9,7 @@ import { ParamControls, GenParams } from "@/components/param-controls";
 import { ImageUpload } from "@/components/image-upload";
 import { ImageResultView } from "@/components/image-result";
 import { Gallery } from "@/components/gallery";
+import { AuthButton } from "@/components/auth-button";
 import { ImageResult } from "@/lib/types";
 import { addHistory, loadHistory, removeHistory } from "@/lib/storage";
 
@@ -56,6 +57,9 @@ export default function Home() {
           body: JSON.stringify({ prompt: prompt.trim(), ...params }),
         });
         const json = await res.json();
+        if (res.status === 401) {
+          throw new Error(json.error || "请先使用 Linux.do 登录");
+        }
         if (!res.ok) throw new Error(json.error || "生成失败");
         b64 = json.b64_json;
       } else {
@@ -73,6 +77,9 @@ export default function Home() {
           body: fd,
         });
         const json = await res.json();
+        if (res.status === 401) {
+          throw new Error(json.error || "请先使用 Linux.do 登录");
+        }
         if (!res.ok) throw new Error(json.error || "编辑失败");
         b64 = json.b64_json;
       }
@@ -93,6 +100,21 @@ export default function Home() {
     }
   }
 
+  // 登录回调错误提示（?auth_error=...）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const authErr = sp.get("auth_error");
+    if (authErr) {
+      setError(`登录失败：${authErr}`);
+      // 清掉 URL 参数，避免刷新重复提示
+      const url = new URL(window.location.href);
+      url.searchParams.delete("auth_error");
+      url.searchParams.delete("auth");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen">
       <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-white/10 bg-bg-900/70 backdrop-blur-xl">
@@ -106,20 +128,23 @@ export default function Home() {
               AI 文生图 · 由 StepFun 驱动
             </span>
           </div>
-          <Tabs value={mode} onValueChange={switchMode}>
-            <TabsList>
-              <TabsTrigger value="generation">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4" /> 文生图
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="edit">
-                <span className="flex items-center gap-1.5">
-                  <ImageIcon className="h-4 w-4" /> 图像编辑
-                </span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Tabs value={mode} onValueChange={switchMode}>
+              <TabsList>
+                <TabsTrigger value="generation">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4" /> 文生图
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="edit">
+                  <span className="flex items-center gap-1.5">
+                    <ImageIcon className="h-4 w-4" /> 图像编辑
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <AuthButton />
+          </div>
         </div>
       </header>
 
