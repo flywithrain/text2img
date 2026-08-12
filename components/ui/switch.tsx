@@ -19,7 +19,7 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
       <span
         className={cn(
           "relative h-6 w-11 rounded-full transition-colors duration-200",
-          checked ? "bg-gradient-to-r from-brand-indigo to-brand-purple" : "bg-white/15",
+          checked ? "bg-gradient-to-r from-brand-indigo to-brand-purple" : "bg-black/10",
         )}
       >
         <span
@@ -29,7 +29,7 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
           )}
         />
       </span>
-      {label ? <span className="text-sm text-[#C7C7D1]">{label}</span> : null}
+      {label ? <span className="text-sm text-ink-500">{label}</span> : null}
     </button>
   );
 }

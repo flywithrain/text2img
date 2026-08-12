@@ -1,16 +1,10 @@
-/** Linux.do Connect 用户（会话中持久化的最小字段） */
-export interface LinuxDoUser {
-  id: number | string;
-  username: string;
-  name?: string;
-  email?: string;
-  avatarUrl?: string;
-  trustLevel?: number;
-  active?: boolean;
+/** 会话中的用户身份（Cookie 仅存 id，详情查库） */
+export interface SessionUser {
+  id: string;
 }
 
 export interface SessionPayload {
-  user: LinuxDoUser;
+  user: SessionUser;
   /** 会话创建时间（ms） */
   iat: number;
   /** 过期时间（ms） */

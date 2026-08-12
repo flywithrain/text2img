@@ -31,7 +31,7 @@ export function TabsList({ children, className }: { children: React.ReactNode; c
   return (
     <div
       className={cn(
-        "inline-flex rounded-xl border border-white/10 bg-white/5 p-1 backdrop-blur-md",
+        "inline-flex rounded-xl border border-black/5 bg-bg-100 p-1 backdrop-blur-md",
         className,
       )}
     >
@@ -59,7 +59,7 @@ export function TabsTrigger({
         "rounded-lg px-4 py-1.5 text-sm font-medium transition-all duration-200 cursor-pointer",
         active
           ? "bg-gradient-to-r from-brand-indigo to-brand-purple text-white shadow"
-          : "text-[#C7C7D1] hover:text-white",
+          : "text-ink-500 hover:text-ink-900",
         className,
       )}
     >

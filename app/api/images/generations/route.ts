@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateImage } from "@/lib/stepfun";
 import { STEP_MODEL } from "@/lib/types";
 import {
-  getSessionUserFromRequest,
+  getSessionUserIdFromRequest,
+  insufficientCredits,
   unauthorized,
 } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,8 +16,12 @@ function clamp(v: number, min: number, max: number) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = getSessionUserFromRequest(req);
-  if (!user) return unauthorized();
+  const userId = getSessionUserIdFromRequest(req);
+  if (!userId) return unauthorized();
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return unauthorized("会话已失效，请重新登录");
+  if (user.credits <= 0) return insufficientCredits();
 
   let body: any;
   try {
@@ -29,22 +35,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "prompt 不能为空" }, { status: 400 });
   }
 
+  const cfgScale =
+    body.cfg_scale !== undefined ? clamp(Number(body.cfg_scale), 0, 20) : undefined;
+  const steps =
+    body.steps !== undefined ? Math.round(clamp(Number(body.steps), 1, 50)) : undefined;
+  const seed = body.seed !== undefined ? Math.round(Number(body.seed)) : undefined;
+
   const payload = {
     model: STEP_MODEL,
     prompt,
     response_format: "b64_json" as const,
-    cfg_scale:
-      body.cfg_scale !== undefined ? clamp(Number(body.cfg_scale), 0, 20) : undefined,
-    steps:
-      body.steps !== undefined ? Math.round(clamp(Number(body.steps), 1, 50)) : undefined,
-    seed: body.seed !== undefined ? Math.round(Number(body.seed)) : undefined,
+    cfg_scale: cfgScale,
+    steps,
+    seed,
     text_mode: body.text_mode === true || body.text_mode === "true",
   };
 
   try {
     const b64 = await generateImage(payload);
+    const imageB64 = `data:image/png;base64,${b64}`;
+
+    const [gen, updated] = await prisma.$transaction([
+      prisma.generation.create({
+        data: {
+          userId,
+          mode: "generation",
+          prompt,
+          imageB64,
+          seed: seed ?? null,
+          cfgScale: cfgScale ?? null,
+          steps: steps ?? null,
+        },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { credits: { decrement: 1 } },
+      }),
+    ]);
+
     return NextResponse.json(
-      { b64_json: b64 },
+      {
+        b64_json: b64,
+        id: gen.id,
+        createdAt: gen.createdAt.getTime(),
+        credits: updated.credits,
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (e: any) {

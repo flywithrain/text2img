@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth/session";
+import { getSessionPublicUser } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const user = getSessionUser();
-  return NextResponse.json(
-    { user },
-    { headers: { "Cache-Control": "no-store" } },
-  );
+  try {
+    const user = await getSessionPublicUser();
+    return NextResponse.json(
+      { user },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (e: unknown) {
+    console.error("me failed:", e);
+    return NextResponse.json(
+      { user: null },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
 }

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -12,29 +12,24 @@ body {
 }
 
 body {
-  @apply bg-bg-900 font-sans text-[#F4F4F8] antialiased;
-  background-image:
-    radial-gradient(60rem 60rem at 8% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
-    radial-gradient(50rem 50rem at 112% 8%, rgba(168, 85, 247, 0.16), transparent 55%),
-    radial-gradient(42rem 42rem at 50% 122%, rgba(139, 92, 246, 0.12), transparent 60%);
-  background-attachment: fixed;
+  @apply bg-bg-100 font-sans text-ink-900 antialiased;
 }
 
 @layer components {
   .glass {
-    @apply rounded-2xl border border-white/10 bg-white/5 shadow-[0_8px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl;
+    @apply rounded-2xl border border-black/5 bg-white shadow-[0_2px_24px_rgba(0,0,0,0.06)];
   }
 
   .glass-soft {
-    @apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-md;
+    @apply rounded-xl border border-black/5 bg-bg-50;
   }
 
   .glass-input {
-    @apply w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[#F4F4F8] outline-none transition placeholder:text-[#C7C7D1]/50 focus:border-brand-violet/60 focus:ring-2 focus:ring-brand-violet/20;
+    @apply w-full rounded-xl border border-black/10 bg-bg-50 px-4 py-3 text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-indigo/50 focus:ring-2 focus:ring-brand-indigo/15;
   }
 
   .label-text {
-    @apply mb-2 block text-sm font-medium text-[#C7C7D1];
+    @apply mb-2 block text-sm font-medium text-ink-500;
   }
 }
 
@@ -44,7 +39,7 @@ input[type="range"] {
   appearance: none;
   height: 6px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.1);
   outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
@@ -55,7 +50,7 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 9999px;
   background: linear-gradient(135deg, #6366f1, #a855f7);
   cursor: pointer;
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
   transition: transform 0.15s ease;
 }
 input[type="range"]::-webkit-slider-thumb:hover {
@@ -76,6 +71,6 @@ input[type="range"]::-moz-range-thumb {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 9999px;
 }

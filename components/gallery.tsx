@@ -13,8 +13,8 @@ interface Props {
 export function Gallery({ items, onSelect, onDelete, activeId }: Props) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-[#C7C7D1]/70">
-        暂无历史记录，生成结果会自动保存在此（仅本机浏览器本地存储）。
+      <p className="text-sm text-ink-500">
+        暂无历史记录。登录后生成的图片与提示词会保存到服务端，可在此查看。
       </p>
     );
   }
@@ -25,7 +25,7 @@ export function Gallery({ items, onSelect, onDelete, activeId }: Props) {
         <div
           key={it.id}
           className={`group relative overflow-hidden rounded-xl border transition ${
-            activeId === it.id ? "border-brand-violet" : "border-white/10"
+            activeId === it.id ? "border-brand-violet" : "border-black/5"
           }`}
         >
           <button type="button" onClick={() => onSelect(it)} className="block w-full">
@@ -36,6 +36,9 @@ export function Gallery({ items, onSelect, onDelete, activeId }: Props) {
               className="aspect-square w-full object-cover transition duration-300 group-hover:scale-105"
             />
           </button>
+          <div className="absolute inset-x-0 top-0 truncate bg-gradient-to-b from-black/70 to-transparent p-2 text-[10px] text-white/90 opacity-0 transition group-hover:opacity-100">
+            {it.prompt}
+          </div>
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
             <button
               type="button"

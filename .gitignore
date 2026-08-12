@@ -5,6 +5,7 @@
 
 # next.js
 /.next/
+/.next-*/
 /out/
 
 # production
@@ -12,6 +13,8 @@
 
 # misc
 .DS_Store
+Thumbs.db
+desktop.ini
 *.pem
 
 # IDE / local config (do not commit)
@@ -28,6 +31,11 @@ yarn-error.log*
 .env*.local
 .env.example
 
+# sqlite
+*.db
+*.db-journal
+/dev.db
+
 # vercel
 .vercel
 
@@ -38,3 +46,7 @@ next-env.d.ts
 # debug artifacts (screenshots, logs)
 reports/**/*.png
 *.log
+/*-fixed.*
+/*.tmp.html
+
+/lib/generated/prisma

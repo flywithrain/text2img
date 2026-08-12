@@ -47,9 +47,9 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
 
   if (loading) {
     return (
-      <div className="flex aspect-square w-full flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5">
+      <div className="flex aspect-square w-full flex-col items-center justify-center gap-4 rounded-2xl border border-black/5 bg-bg-100">
         <Loader2 className="h-10 w-10 animate-spin text-brand-violet" />
-        <p className="text-sm text-[#C7C7D1]">
+        <p className="text-sm text-ink-500">
           {mode === "edit" ? "正在编辑图片…" : "AI 正在绘制你的画面…"}
         </p>
       </div>
@@ -58,9 +58,9 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
 
   if (!image) {
     return (
-      <div className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] text-center">
+      <div className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-black/10 bg-bg-200 text-center">
         <Sparkles className="h-10 w-10 text-brand-violet/70" />
-        <p className="px-6 text-sm text-[#C7C7D1]/80">
+        <p className="px-6 text-sm text-ink-500">
           在左侧输入提示词并点击「开始生成」，<br />你的作品会在这里绽放。
         </p>
       </div>
@@ -73,20 +73,20 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
       <img
         src={image}
         alt={prompt}
-        className="w-full rounded-2xl border border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.35)]"
+        className="w-full rounded-2xl border border-black/5 shadow-[0_8px_40px_rgba(0,0,0,0.35)]"
       />
       <div className="mt-4 flex gap-3">
         <button
           type="button"
           onClick={handleDownload}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-[#F4F4F8] transition hover:bg-white/10"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-black/10 bg-bg-100 px-4 py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-bg-200"
         >
           <Download className="h-4 w-4" /> 下载
         </button>
         <button
           type="button"
           onClick={handleShare}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-[#F4F4F8] transition hover:bg-white/10"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-black/10 bg-bg-100 px-4 py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-bg-200"
         >
           <Share2 className="h-4 w-4" /> 分享
         </button>

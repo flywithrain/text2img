@@ -15,8 +15,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       primary:
         "bg-gradient-to-r from-brand-indigo to-brand-purple text-white shadow-lg shadow-brand-violet/30 hover:-translate-y-0.5 hover:shadow-brand-violet/50",
       outline:
-        "border border-white/15 bg-white/5 text-[#F4F4F8] hover:bg-white/10",
-      ghost: "text-[#C7C7D1] hover:bg-white/5 hover:text-white",
+        "border border-black/10 bg-bg-100 text-ink-900 hover:bg-bg-200",
+      ghost: "text-ink-500 hover:bg-bg-100 hover:text-ink-900",
     };
     return (
       <button

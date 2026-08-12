@@ -20,7 +20,7 @@ export function ParamControls({ params, onChange }: Props) {
     <div className="space-y-5">
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm font-medium text-[#C7C7D1]">引导系数 (cfg_scale)</span>
+          <span className="text-sm font-medium text-ink-500">引导系数 (cfg_scale)</span>
           <span className="text-sm font-semibold text-brand-violet">
             {params.cfg_scale.toFixed(1)}
           </span>
@@ -32,7 +32,7 @@ export function ParamControls({ params, onChange }: Props) {
           step={0.1}
           onChange={(v) => onChange({ cfg_scale: v })}
         />
-        <p className="mt-1 text-xs text-[#C7C7D1]/70">
+        <p className="mt-1 text-xs text-ink-500">
           数值越高越贴近提示词；过低则更自由发散。
         </p>
       </div>
@@ -63,7 +63,7 @@ export function ParamControls({ params, onChange }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <span className="label-text mb-0">文本模式 (text_mode)</span>
-          <p className="text-xs text-[#C7C7D1]/70">开启后偏向生成带文字内容的图文。</p>
+          <p className="text-xs text-ink-500">开启后偏向生成带文字内容的图文。</p>
         </div>
         <div className="pt-1">
           <Switch

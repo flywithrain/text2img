@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { editImage } from "@/lib/stepfun";
 import {
-  getSessionUserFromRequest,
+  getSessionUserIdFromRequest,
+  insufficientCredits,
   unauthorized,
 } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,14 +18,21 @@ function getNum(form: FormData, key: string): number | undefined {
 }
 
 export async function POST(req: NextRequest) {
-  const user = getSessionUserFromRequest(req);
-  if (!user) return unauthorized();
+  const userId = getSessionUserIdFromRequest(req);
+  if (!userId) return unauthorized();
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return unauthorized("会话已失效，请重新登录");
+  if (user.credits <= 0) return insufficientCredits();
 
   let form: FormData;
   try {
     form = await req.formData();
   } catch {
-    return NextResponse.json({ error: "请求体解析失败（应为 multipart/form-data）" }, { status: 400 });
+    return NextResponse.json(
+      { error: "请求体解析失败（应为 multipart/form-data）" },
+      { status: 400 },
+    );
   }
 
   const prompt = (form.get("prompt") as string | null)?.trim();
@@ -36,17 +45,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "请上传参考图" }, { status: 400 });
   }
 
+  const cfgScale = getNum(form, "cfg_scale");
+  const steps = getNum(form, "steps");
+  const seed = getNum(form, "seed");
+
   try {
     const b64 = await editImage({
       prompt,
       image,
-      cfg_scale: getNum(form, "cfg_scale"),
-      steps: getNum(form, "steps"),
-      seed: getNum(form, "seed"),
+      cfg_scale: cfgScale,
+      steps: steps !== undefined ? Math.round(steps) : undefined,
+      seed: seed !== undefined ? Math.round(seed) : undefined,
       text_mode: form.get("text_mode") === "true" || form.get("text_mode") === "on",
     });
+    const imageB64 = `data:image/png;base64,${b64}`;
+
+    const [gen, updated] = await prisma.$transaction([
+      prisma.generation.create({
+        data: {
+          userId,
+          mode: "edit",
+          prompt,
+          imageB64,
+          seed: seed !== undefined ? Math.round(seed) : null,
+          cfgScale: cfgScale ?? null,
+          steps: steps !== undefined ? Math.round(steps) : null,
+        },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { credits: { decrement: 1 } },
+      }),
+    ]);
+
     return NextResponse.json(
-      { b64_json: b64 },
+      {
+        b64_json: b64,
+        id: gen.id,
+        createdAt: gen.createdAt.getTime(),
+        credits: updated.credits,
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (e: any) {

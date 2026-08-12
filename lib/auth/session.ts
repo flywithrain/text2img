@@ -6,7 +6,9 @@ import {
   SESSION_COOKIE,
   SESSION_MAX_AGE_SEC,
 } from "./config";
-import type { LinuxDoUser, SessionPayload } from "./types";
+import type { SessionPayload, SessionUser } from "./types";
+import { getUserById, toPublicUser } from "@/lib/users";
+import type { PublicUser } from "@/lib/user-types";
 
 function b64url(buf: Buffer | string): string {
   const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf, "utf8");
@@ -44,10 +46,10 @@ function verify(data: string, sig: string): boolean {
   }
 }
 
-export function encodeSession(user: LinuxDoUser): string {
+export function encodeSession(userId: string): string {
   const now = Date.now();
   const payload: SessionPayload = {
-    user,
+    user: { id: userId },
     iat: now,
     exp: now + SESSION_MAX_AGE_SEC * 1000,
   };
@@ -64,7 +66,7 @@ export function decodeSession(token: string | undefined | null): SessionPayload 
   if (!body || !sig || !verify(body, sig)) return null;
   try {
     const payload = JSON.parse(fromB64url(body).toString("utf8")) as SessionPayload;
-    if (!payload?.user?.id || !payload.user.username) return null;
+    if (!payload?.user?.id) return null;
     if (typeof payload.exp !== "number" || payload.exp < Date.now()) return null;
     return payload;
   } catch {
@@ -80,36 +82,62 @@ const cookieOpts = {
   maxAge: SESSION_MAX_AGE_SEC,
 };
 
-/** 在 Route Handler 中写入会话 */
-export function setSessionCookie(res: NextResponse, user: LinuxDoUser) {
-  res.cookies.set(SESSION_COOKIE, encodeSession(user), cookieOpts);
+/** 在 Route Handler 中写入会话（存 DB userId） */
+export function setSessionCookie(res: NextResponse, userId: string) {
+  res.cookies.set(SESSION_COOKIE, encodeSession(userId), cookieOpts);
 }
 
 export function clearSessionCookie(res: NextResponse) {
   res.cookies.set(SESSION_COOKIE, "", { ...cookieOpts, maxAge: 0 });
 }
 
-/** Server Component / Route：从 cookies() 读当前用户 */
-export function getSessionUser(): LinuxDoUser | null {
+export function getSessionUserIdFromRequest(req: NextRequest): string | null {
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  return decodeSession(token)?.user.id ?? null;
+}
+
+export function getSessionUserId(): string | null {
   try {
     const jar = cookies();
     const token = jar.get(SESSION_COOKIE)?.value;
-    return decodeSession(token)?.user ?? null;
+    return decodeSession(token)?.user.id ?? null;
   } catch {
     return null;
   }
 }
 
-/** 从请求对象读取会话用户（API Route / middleware） */
-export function getSessionUserFromRequest(req: NextRequest): LinuxDoUser | null {
-  const token = req.cookies.get(SESSION_COOKIE)?.value;
-  return decodeSession(token)?.user ?? null;
-}
-
 /** 未登录时返回 401 JSON */
-export function unauthorized(message = "请先使用 Linux.do 登录") {
+export function unauthorized(message = "请先登录") {
   return NextResponse.json(
     { error: message, code: "UNAUTHORIZED" },
     { status: 401, headers: { "Cache-Control": "no-store" } },
   );
 }
+
+export function insufficientCredits() {
+  return NextResponse.json(
+    { error: "生图次数不足，请先签到获取", code: "NO_CREDITS" },
+    { status: 402, headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+/** 从请求解析完整用户（查库） */
+export async function requireUserFromRequest(
+  req: NextRequest,
+): Promise<{ user: PublicUser } | { response: NextResponse }> {
+  const id = getSessionUserIdFromRequest(req);
+  if (!id) return { response: unauthorized() };
+  const row = await getUserById(id);
+  if (!row) return { response: unauthorized("会话已失效，请重新登录") };
+  return { user: toPublicUser(row) };
+}
+
+export async function getSessionPublicUser(): Promise<PublicUser | null> {
+  const id = getSessionUserId();
+  if (!id) return null;
+  const row = await getUserById(id);
+  return row ? toPublicUser(row) : null;
+}
+
+// 兼容旧导出名
+export type { SessionUser };

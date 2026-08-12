@@ -1,0 +1,63 @@
+// Prisma schema — 生产使用 Vercel Neo（PostgreSQL）
+// Prisma 7: 连接 URL 写在 prisma.config.ts，Client 用 adapter
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// 本站用户（用户名 + 密码 + 邮箱验证码注册）
+model User {
+  id           String   @id @default(cuid())
+  /// 统一为 email
+  provider     String   @default("email")
+  /// 唯一业务键：email:<addr>
+  providerKey  String   @unique
+  email        String   @unique
+  username     String   @unique
+  /// 密码 scrypt 哈希（salt:hash）
+  passwordHash String
+  displayName  String?
+  avatarUrl    String?
+  /// 剩余生图次数
+  credits      Int      @default(20)
+  /// 上次签到日期 YYYY-MM-DD（UTC+8）
+  lastCheckIn  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  generations Generation[]
+}
+
+/// 邮箱验证码
+model OtpCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
+}
+
+/// 生图 / 编辑历史（存 base64 或 data URL）
+model Generation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// generation | edit
+  mode      String
+  prompt    String
+  /// data:image/png;base64,... 或纯 base64
+  imageB64  String
+  seed      Int?
+  cfgScale  Float?
+  steps     Int?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}

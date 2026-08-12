@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, Image as ImageIcon, Wand2, AlertCircle } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Wand2, AlertCircle, Compass, Braces, Calculator } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GlassCard } from "@/components/ui/glass-card";
 import { PromptForm } from "@/components/prompt-form";
@@ -9,9 +9,8 @@ import { ParamControls, GenParams } from "@/components/param-controls";
 import { ImageUpload } from "@/components/image-upload";
 import { ImageResultView } from "@/components/image-result";
 import { Gallery } from "@/components/gallery";
-import { AuthButton } from "@/components/auth-button";
+import { AuthButton, notifyUserRefresh } from "@/components/auth-button";
 import { ImageResult } from "@/lib/types";
-import { addHistory, loadHistory, removeHistory } from "@/lib/storage";
 
 const DEFAULT_PARAMS: GenParams = {
   cfg_scale: 1.0,
@@ -29,9 +28,31 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImageResult | null>(null);
   const [history, setHistory] = useState<ImageResult[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  async function loadServerHistory() {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch("/api/history?limit=40", { cache: "no-store" });
+      if (res.status === 401) {
+        setHistory([]);
+        return;
+      }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "加载历史失败");
+      setHistory((json.items as ImageResult[]) ?? []);
+    } catch {
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
 
   useEffect(() => {
-    setHistory(loadHistory());
+    void loadServerHistory();
+    const onRefresh = () => void loadServerHistory();
+    window.addEventListener("steppix:user-refresh", onRefresh);
+    return () => window.removeEventListener("steppix:user-refresh", onRefresh);
   }, []);
 
   const handleParams = (next: Partial<GenParams>) =>
@@ -49,6 +70,8 @@ export default function Home() {
 
     try {
       let b64: string;
+      let id: string;
+      let createdAt: number;
 
       if (mode === "generation") {
         const res = await fetch("/api/images/generations", {
@@ -58,10 +81,16 @@ export default function Home() {
         });
         const json = await res.json();
         if (res.status === 401) {
-          throw new Error(json.error || "请先使用 Linux.do 登录");
+          throw new Error(json.error || "请先登录");
+        }
+        if (res.status === 402) {
+          throw new Error(json.error || "生图次数不足，请先签到");
         }
         if (!res.ok) throw new Error(json.error || "生成失败");
         b64 = json.b64_json;
+        id = json.id;
+        createdAt = json.createdAt ?? Date.now();
+        if (typeof json.credits === "number") notifyUserRefresh();
       } else {
         if (!imageFile) {
           setError("请先上传参考图");
@@ -78,25 +107,51 @@ export default function Home() {
         });
         const json = await res.json();
         if (res.status === 401) {
-          throw new Error(json.error || "请先使用 Linux.do 登录");
+          throw new Error(json.error || "请先登录");
+        }
+        if (res.status === 402) {
+          throw new Error(json.error || "生图次数不足，请先签到");
         }
         if (!res.ok) throw new Error(json.error || "编辑失败");
         b64 = json.b64_json;
+        id = json.id;
+        createdAt = json.createdAt ?? Date.now();
+        if (typeof json.credits === "number") notifyUserRefresh();
       }
 
       const item: ImageResult = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        id: id || `${Date.now()}`,
         mode,
         prompt: prompt.trim(),
         imageB64: `data:image/png;base64,${b64}`,
-        createdAt: Date.now(),
+        createdAt,
       };
       setResult(item);
-      setHistory(addHistory(item));
+      setHistory((prev) => [item, ...prev.filter((x) => x.id !== item.id)]);
     } catch (e: any) {
       setError(e?.message || "请求失败");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/history?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      if (res.status === 401) {
+        setError("请先登录");
+        return;
+      }
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || "删除失败");
+      }
+      setHistory((prev) => prev.filter((x) => x.id !== id));
+      if (result?.id === id) setResult(null);
+    } catch (e: any) {
+      setError(e?.message || "删除失败");
     }
   }
 
@@ -107,7 +162,6 @@ export default function Home() {
     const authErr = sp.get("auth_error");
     if (authErr) {
       setError(`登录失败：${authErr}`);
-      // 清掉 URL 参数，避免刷新重复提示
       const url = new URL(window.location.href);
       url.searchParams.delete("auth_error");
       url.searchParams.delete("auth");
@@ -117,32 +171,61 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-white/10 bg-bg-900/70 backdrop-blur-xl">
+      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-black/5 bg-bg-50/80 backdrop-blur-xl">
         <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple shadow-lg shadow-brand-violet/40">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple shadow-lg shadow-brand-violet/30">
               <Wand2 className="h-5 w-5 text-white" />
             </span>
-            <span className="text-lg font-bold tracking-tight">StepPix</span>
-            <span className="hidden text-xs text-[#C7C7D1]/70 sm:inline">
+            <span className="hidden text-lg font-bold tracking-tight text-ink-900 sm:inline">StepPix</span>
+            <span className="hidden text-xs text-ink-400 sm:inline">
               AI 文生图 · 由 StepFun 驱动
             </span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <Tabs value={mode} onValueChange={switchMode}>
               <TabsList>
-                <TabsTrigger value="generation">
+                <TabsTrigger value="generation" className="px-2 sm:px-4">
                   <span className="flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4" /> 文生图
+                    <Sparkles className="h-4 w-4" /> <span className="hidden md:inline">文生图</span>
                   </span>
                 </TabsTrigger>
-                <TabsTrigger value="edit">
+                <TabsTrigger value="edit" className="px-2 sm:px-4">
                   <span className="flex items-center gap-1.5">
-                    <ImageIcon className="h-4 w-4" /> 图像编辑
+                    <ImageIcon className="h-4 w-4" /> <span className="hidden md:inline">图像编辑</span>
                   </span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            <div className="hidden items-center rounded-xl border border-black/5 bg-bg-100 p-1 lg:inline-flex">
+              <a
+                href="https://navigation.oneget.space"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
+              >
+                <Compass className="h-4 w-4" />
+                <span>资源导航</span>
+              </a>
+              <a
+                href="https://json-tool.oneget.space"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
+              >
+                <Braces className="h-4 w-4" />
+                <span>开发工具</span>
+              </a>
+              <a
+                href="https://calculator-tool.oneget.space"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
+              >
+                <Calculator className="h-4 w-4" />
+                <span>计算器大全</span>
+              </a>
+            </div>
             <AuthButton />
           </div>
         </div>
@@ -150,7 +233,6 @@ export default function Home() {
 
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
-          {/* 左侧控制面板 */}
           <div className="space-y-5">
             <GlassCard>
               <PromptForm
@@ -169,7 +251,7 @@ export default function Home() {
             ) : null}
 
             <GlassCard>
-              <h2 className="mb-4 text-sm font-semibold text-[#F4F4F8]">
+              <h2 className="mb-4 text-sm font-semibold text-ink-900">
                 高级参数
               </h2>
               <ParamControls params={params} onChange={handleParams} />
@@ -183,7 +265,6 @@ export default function Home() {
             ) : null}
           </div>
 
-          {/* 右侧结果与画廊 */}
           <div className="space-y-6">
             <ImageResultView
               image={result?.imageB64 ?? null}
@@ -193,27 +274,25 @@ export default function Home() {
             />
 
             <GlassCard>
-              <h2 className="mb-4 text-sm font-semibold text-[#F4F4F8]">
+              <h2 className="mb-4 text-sm font-semibold text-ink-900">
                 历史画廊
-                <span className="ml-2 text-xs font-normal text-[#C7C7D1]/60">
-                  {history.length} 张 · 点击查看大图
+                <span className="ml-2 text-xs font-normal text-ink-400">
+                  {historyLoading
+                    ? "加载中…"
+                    : `${history.length} 张 · 云端同步 · 点击查看大图`}
                 </span>
               </h2>
               <Gallery
                 items={history}
                 activeId={result?.id}
                 onSelect={(it) => setResult(it)}
-                onDelete={(id) => {
-                  const next = removeHistory(id);
-                  setHistory(next);
-                  if (result?.id === id) setResult(null);
-                }}
+                onDelete={handleDelete}
               />
             </GlassCard>
           </div>
         </div>
 
-        <footer className="mt-10 text-center text-xs text-[#C7C7D1]/50">
+        <footer className="mt-10 text-center text-xs text-ink-400">
           本站点通过服务端代理调用 StepFun Step Plan 接口，API Key 仅存储于服务端环境变量，
           不会下发到浏览器。图片由 AI 生成，请遵守相关使用规范。
         </footer>
