@@ -8,13 +8,16 @@ function toProxyUrl(pathname: string): string {
 
 function extractPathname(proxyUrl: string): string {
   try {
+    let p: string;
     if (proxyUrl.startsWith("/api/blob?path=")) {
-      return decodeURIComponent(proxyUrl.replace("/api/blob?path=", ""));
+      p = decodeURIComponent(proxyUrl.replace("/api/blob?path=", ""));
+    } else {
+      // 兼容旧数据（可能是完整的 Blob URL 或 pathname）
+      p = proxyUrl;
     }
-    // 兼容旧数据（可能是完整的 Blob URL 或 pathname）
-    return proxyUrl;
+    return p.startsWith("/") ? p : `/${p}`;
   } catch {
-    return proxyUrl;
+    return proxyUrl.startsWith("/") ? proxyUrl : `/${proxyUrl}`;
   }
 }
 

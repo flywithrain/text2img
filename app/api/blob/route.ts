@@ -5,10 +5,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const path = req.nextUrl.searchParams.get("path");
-  if (!path || !path.startsWith("/")) {
+  const rawPath = req.nextUrl.searchParams.get("path");
+  if (!rawPath) {
     return NextResponse.json({ error: "invalid path" }, { status: 400 });
   }
+
+  const path = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
 
   try {
     const { body, contentType } = await readBlob(path);
