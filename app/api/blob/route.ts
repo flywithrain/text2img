@@ -25,7 +25,15 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (e: any) {
-    console.error("blob read failed:", e?.message);
+    const msg = e?.message ?? "";
+    console.error("blob read failed:", { path, msg, name: e?.name });
+
+    const isNotFound =
+      e?.name === "BlobNotFoundError" ||
+      /not found|404|no blob/i.test(msg);
+    if (isNotFound) {
+      return NextResponse.json({ error: "blob not found" }, { status: 404 });
+    }
     return NextResponse.json({ error: "读取失败" }, { status: 500 });
   }
 }

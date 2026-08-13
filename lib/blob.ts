@@ -47,7 +47,12 @@ export async function readBlob(pathname: string): Promise<{
   contentType: string | null;
 }> {
   const blob = await head(pathname);
+  if (!blob?.url) throw new Error("blob url missing");
+
   const res = await fetch(blob.url);
+  if (!res.ok) {
+    throw new Error(`blob fetch ${res.status}: ${res.statusText}`);
+  }
   return {
     body: res.body,
     contentType: blob.contentType ?? res.headers.get("content-type"),

@@ -4,12 +4,7 @@ const nextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
   reactStrictMode: true,
   experimental: {
-    // better-sqlite3 为原生模块，勿打包进 serverless bundle
-    serverComponentsExternalPackages: [
-      "better-sqlite3",
-      "@prisma/adapter-better-sqlite3",
-      "@prisma/client",
-    ],
+    serverComponentsExternalPackages: ["@prisma/client", "pg"],
   },
 };
 
