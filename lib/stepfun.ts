@@ -74,6 +74,8 @@ export async function editImage(
     if (params.seed !== undefined) form.append("seed", String(params.seed));
     if (params.text_mode !== undefined)
       form.append("text_mode", String(params.text_mode));
+    if (params.negative_prompt !== undefined && params.negative_prompt.trim())
+      form.append("negative_prompt", params.negative_prompt.trim());
 
     const res = await fetch(`${STEPFUN_BASE}/images/edits`, {
       method: "POST",

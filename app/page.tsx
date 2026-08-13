@@ -15,8 +15,10 @@ import { ImageResult } from "@/lib/types";
 const DEFAULT_PARAMS: GenParams = {
   cfg_scale: 1.0,
   steps: 8,
-  seed: 1,
-  text_mode: true,
+  seed: 0,
+  text_mode: false,
+  size: "1024x1024",
+  negative_prompt: "",
 };
 
 export default function Home() {
@@ -73,7 +75,15 @@ export default function Home() {
         const res = await fetch("/api/images/generations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: prompt.trim(), ...params }),
+          body: JSON.stringify({
+            prompt: prompt.trim(),
+            cfg_scale: params.cfg_scale,
+            steps: params.steps,
+            seed: params.seed || undefined,
+            size: params.size,
+            text_mode: params.text_mode,
+            negative_prompt: params.negative_prompt || undefined,
+          }),
         });
         const json = await res.json();
         if (res.status === 401) {
@@ -97,7 +107,12 @@ export default function Home() {
         const fd = new FormData();
         fd.append("prompt", prompt.trim());
         fd.append("image", imageFile);
-        Object.entries(params).forEach(([k, v]) => fd.append(k, String(v)));
+        fd.append("cfg_scale", String(params.cfg_scale));
+        fd.append("steps", String(params.steps));
+        if (params.seed) fd.append("seed", String(params.seed));
+        fd.append("text_mode", String(params.text_mode));
+        if (params.negative_prompt.trim())
+          fd.append("negative_prompt", params.negative_prompt.trim());
         const res = await fetch("/api/images/edits", {
           method: "POST",
           body: fd,
@@ -134,77 +149,79 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-black/5 bg-bg-50/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple shadow-lg shadow-brand-violet/30">
-              <Wand2 className="h-5 w-5 text-white" />
-            </span>
-            <span className="hidden text-lg font-bold tracking-tight text-ink-900 sm:inline">StepPix</span>
-            <span className="hidden text-xs text-ink-400 sm:inline">
-              AI 文生图 · 由 StepFun 驱动
-            </span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Tabs value={mode} onValueChange={switchMode}>
-              <TabsList>
-                <TabsTrigger value="generation" className="px-2 sm:px-4">
-                  <span className="flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4" /> <span className="hidden md:inline">文生图</span>
-                  </span>
-                </TabsTrigger>
-                <TabsTrigger value="edit" className="px-2 sm:px-4">
-                  <span className="flex items-center gap-1.5">
-                    <ImageIcon className="h-4 w-4" /> <span className="hidden md:inline">图像编辑</span>
-                  </span>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <Link
-              href="/history"
-              className="flex items-center gap-1.5 rounded-xl border border-black/5 bg-bg-100 px-2.5 py-2 text-sm font-medium text-ink-500 transition hover:bg-bg-200 hover:text-ink-900"
+    <div className="flex h-screen flex-col">
+      {/* 顶部导航 */}
+      <header className="z-50 flex h-16 shrink-0 items-center justify-between border-b border-black/5 bg-bg-50/80 px-4 backdrop-blur-xl sm:px-6">
+        <div className="flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple shadow-lg shadow-brand-violet/30">
+            <Wand2 className="h-5 w-5 text-white" />
+          </span>
+          <span className="hidden text-lg font-bold tracking-tight text-ink-900 sm:inline">StepPix</span>
+          <span className="hidden text-xs text-ink-400 sm:inline">
+            AI 文生图 · 由 StepFun 驱动
+          </span>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Tabs value={mode} onValueChange={switchMode}>
+            <TabsList>
+              <TabsTrigger value="generation" className="px-2 sm:px-4">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4" /> <span className="hidden md:inline">文生图</span>
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="edit" className="px-2 sm:px-4">
+                <span className="flex items-center gap-1.5">
+                  <ImageIcon className="h-4 w-4" /> <span className="hidden md:inline">图像编辑</span>
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Link
+            href="/history"
+            className="flex items-center gap-1.5 rounded-xl border border-black/5 bg-bg-100 px-2.5 py-2 text-sm font-medium text-ink-500 transition hover:bg-bg-200 hover:text-ink-900"
+          >
+            <HistoryIcon className="h-4 w-4" />
+            <span className="hidden md:inline">历史</span>
+          </Link>
+          <div className="hidden items-center rounded-xl border border-black/5 bg-bg-100 p-1 lg:inline-flex">
+            <a
+              href="https://navigation.oneget.space"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
             >
-              <HistoryIcon className="h-4 w-4" />
-              <span className="hidden md:inline">历史</span>
-            </Link>
-            <div className="hidden items-center rounded-xl border border-black/5 bg-bg-100 p-1 lg:inline-flex">
-              <a
-                href="https://navigation.oneget.space"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
-              >
-                <Compass className="h-4 w-4" />
-                <span>资源导航</span>
-              </a>
-              <a
-                href="https://json-tool.oneget.space"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
-              >
-                <Braces className="h-4 w-4" />
-                <span>开发工具</span>
-              </a>
-              <a
-                href="https://calculator-tool.oneget.space"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
-              >
-                <Calculator className="h-4 w-4" />
-                <span>计算器大全</span>
-              </a>
-            </div>
-            <AuthButton />
+              <Compass className="h-4 w-4" />
+              <span>资源导航</span>
+            </a>
+            <a
+              href="https://json-tool.oneget.space"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
+            >
+              <Braces className="h-4 w-4" />
+              <span>开发工具</span>
+            </a>
+            <a
+              href="https://calculator-tool.oneget.space"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
+            >
+              <Calculator className="h-4 w-4" />
+              <span>计算器大全</span>
+            </a>
           </div>
+          <AuthButton />
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
-          <div className="space-y-5">
+      {/* 主体：左侧工具栏 + 右侧预览 */}
+      <div className="flex min-h-0 flex-1">
+        {/* 左侧工具栏 — 占满整页高度，可滚动 */}
+        <aside className="flex w-full flex-col overflow-y-auto border-r border-black/5 bg-bg-100 lg:w-[420px] lg:shrink-0">
+          <div className="space-y-4 p-4">
+            {/* 提示词输入 */}
             <GlassCard>
               <PromptForm
                 prompt={prompt}
@@ -215,19 +232,22 @@ export default function Home() {
               />
             </GlassCard>
 
+            {/* 图像编辑模式：上传参考图 */}
             {mode === "edit" ? (
               <GlassCard>
                 <ImageUpload file={imageFile} onChange={setImageFile} />
               </GlassCard>
             ) : null}
 
+            {/* 高级参数 */}
             <GlassCard>
               <h2 className="mb-4 text-sm font-semibold text-ink-900">
                 高级参数
               </h2>
-              <ParamControls params={params} onChange={handleParams} />
+              <ParamControls params={params} onChange={handleParams} mode={mode} />
             </GlassCard>
 
+            {/* 错误提示 */}
             {error ? (
               <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -235,41 +255,41 @@ export default function Home() {
               </div>
             ) : null}
           </div>
+        </aside>
 
-          <div className="space-y-6">
-            <ImageResultView
-              image={result?.imageUrl ?? null}
-              loading={loading}
-              prompt={prompt}
-              mode={mode}
-            />
+        {/* 右侧预览区 */}
+        <main className="hidden min-w-0 flex-1 lg:block">
+          <div className="h-full overflow-y-auto p-6">
+            <div className="mx-auto max-w-4xl space-y-6">
+              <ImageResultView
+                image={result?.imageUrl ?? null}
+                loading={loading}
+                prompt={prompt}
+                mode={mode}
+              />
 
-            <Link href="/history" className="block">
-              <GlassCard className="transition hover:border-brand-violet/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <HistoryIcon className="h-5 w-5 text-brand-violet" />
-                    <div>
-                      <p className="text-sm font-semibold text-ink-900">历史画廊</p>
-                      <p className="text-xs text-ink-400">
-                        {historyCount > 0
-                          ? `${historyCount} 张作品 · 点击查看全部并下载`
-                          : "点击查看全部历史记录"}
-                      </p>
+              <Link href="/history" className="block">
+                <GlassCard className="transition hover:border-brand-violet/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <HistoryIcon className="h-5 w-5 text-brand-violet" />
+                      <div>
+                        <p className="text-sm font-semibold text-ink-900">历史画廊</p>
+                        <p className="text-xs text-ink-400">
+                          {historyCount > 0
+                            ? `${historyCount} 张作品 · 点击查看全部并下载`
+                            : "点击查看全部历史记录"}
+                        </p>
+                      </div>
                     </div>
+                    <span className="text-sm text-ink-400">→</span>
                   </div>
-                  <span className="text-sm text-ink-400">→</span>
-                </div>
-              </GlassCard>
-            </Link>
+                </GlassCard>
+              </Link>
+            </div>
           </div>
-        </div>
-
-        <footer className="mt-10 text-center text-xs text-ink-400">
-          本站点通过服务端代理调用 StepFun Step Plan 接口，API Key 仅存储于服务端环境变量，
-          不会下发到浏览器。图片由 AI 生成，请遵守相关使用规范。
-        </footer>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

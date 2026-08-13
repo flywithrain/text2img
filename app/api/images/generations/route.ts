@@ -37,10 +37,18 @@ export async function POST(req: NextRequest) {
   }
 
   const cfgScale =
-    body.cfg_scale !== undefined ? clamp(Number(body.cfg_scale), 0, 20) : undefined;
+    body.cfg_scale !== undefined ? clamp(Number(body.cfg_scale), 1, 10) : undefined;
   const steps =
     body.steps !== undefined ? Math.round(clamp(Number(body.steps), 1, 50)) : undefined;
   const seed = body.seed !== undefined ? Math.round(Number(body.seed)) : undefined;
+  const size =
+    typeof body.size === "string" && /^\d+x\d+$/.test(body.size)
+      ? body.size
+      : undefined;
+  const negativePrompt =
+    typeof body.negative_prompt === "string"
+      ? body.negative_prompt.trim().slice(0, 512)
+      : undefined;
 
   const payload = {
     model: STEP_MODEL,
@@ -49,7 +57,9 @@ export async function POST(req: NextRequest) {
     cfg_scale: cfgScale,
     steps,
     seed,
+    size,
     text_mode: body.text_mode === true || body.text_mode === "true",
+    negative_prompt: negativePrompt,
   };
 
   try {

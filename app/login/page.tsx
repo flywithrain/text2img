@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Mail, Loader2, User, Lock, Wand2, ArrowLeft } from "lucide-react";
+import { Mail, Loader2, User, Lock, Wand2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +76,8 @@ function LoginForm() {
     }
   }
 
-  const inputCls = "w-full rounded-xl border border-black/10 bg-bg-50 pl-10 pr-4 py-3 text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-indigo/50 focus:ring-2 focus:ring-brand-indigo/15";
+  const inputCls =
+    "w-full rounded-xl border border-black/10 bg-bg-50 pl-10 pr-4 py-3 text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-indigo/50 focus:ring-2 focus:ring-brand-indigo/15";
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-100 px-4 py-12">
@@ -88,7 +89,7 @@ function LoginForm() {
         <span className="text-xl font-bold tracking-tight text-ink-900">StepPix</span>
       </Link>
 
-      <div className="w-full max-w-[400px] rounded-2xl border border-black/5 bg-white p-8 shadow-[0_2px_24px_rgba(0,0,0,0.06)]">
+      <div className="w-full max-w-[420px] rounded-2xl border border-black/5 bg-white p-8 shadow-[0_2px_24px_rgba(0,0,0,0.06)]">
         <h1 className="mb-6 text-center text-xl font-bold text-ink-900">
           {mode === "login" ? "登录" : "注册"}
         </h1>
@@ -141,22 +142,41 @@ function LoginForm() {
               <label className="mb-1.5 block text-sm font-medium text-ink-500" htmlFor="auth-email">
                 邮箱
               </label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300" />
+                <input
+                  id="auth-email"
+                  type="email"
+                  className={inputCls}
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="mb-1.5 block text-sm font-medium text-ink-500" htmlFor="auth-code">
+                验证码
+              </label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300" />
+                  <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300" />
                   <input
-                    id="auth-email"
-                    type="email"
-                    className={inputCls}
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
+                    id="auth-code"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="w-full rounded-xl border border-black/10 bg-bg-50 pl-10 pr-4 py-3 tracking-widest text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-indigo/50 focus:ring-2 focus:ring-brand-indigo/15"
+                    placeholder="6 位数字"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   />
                 </div>
                 <Button
                   variant="outline"
-                  className="shrink-0 px-3"
+                  className="shrink-0 px-4"
                   disabled={!email.trim() || cooldown > 0 || loading === "send"}
                   onClick={sendCode}
                 >
@@ -169,22 +189,6 @@ function LoginForm() {
                   )}
                 </Button>
               </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="mb-1.5 block text-sm font-medium text-ink-500" htmlFor="auth-code">
-                验证码
-              </label>
-              <input
-                id="auth-code"
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                className="w-full rounded-xl border border-black/10 bg-bg-50 px-4 py-3 tracking-widest text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-indigo/50 focus:ring-2 focus:ring-brand-indigo/15"
-                placeholder="6 位数字"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              />
               {sent ? (
                 <p className="mt-1.5 text-xs text-emerald-600">
                   验证码已发送，请查收邮箱（含垃圾箱）
@@ -236,10 +240,6 @@ function LoginForm() {
             "注册"
           )}
         </Button>
-
-        <p className="mt-5 text-center text-xs text-ink-400">
-          新用户注册即送 20 次生图机会 · 每日签到可再领 10–20 次
-        </p>
       </div>
 
       <Link

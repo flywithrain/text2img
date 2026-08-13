@@ -24,13 +24,16 @@ export function PromptForm({
 
   return (
     <div>
-      <span className="label-text">提示词 (prompt)</span>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-ink-500">提示词 (prompt)</span>
+        <span className="text-xs text-ink-300">{prompt.length}/512</span>
+      </div>
       <textarea
         value={prompt}
-        onChange={(e) => onPromptChange(e.target.value)}
-        rows={4}
+        onChange={(e) => onPromptChange(e.target.value.slice(0, 512))}
+        rows={8}
         placeholder={placeholder}
-        className="glass-input resize-none"
+        className="glass-input resize-none leading-relaxed"
       />
       <button
         type="button"

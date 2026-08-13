@@ -1,5 +1,5 @@
 /** 业务常量：积分 / 签到 / OTP */
-export const SIGNUP_BONUS_CREDITS = Number(process.env.SIGNUP_BONUS_CREDITS) || 20;
+export const SIGNUP_BONUS_CREDITS = Number(process.env.SIGNUP_BONUS_CREDITS) || 100;
 export const CHECKIN_MIN = Number(process.env.CHECKIN_MIN_CREDITS) || 10;
 export const CHECKIN_MAX = Number(process.env.CHECKIN_MAX_CREDITS) || 20;
 export const OTP_TTL_MS = Number(process.env.OTP_TTL_MS) || 10 * 60 * 1000;

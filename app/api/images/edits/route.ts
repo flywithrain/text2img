@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
   const cfgScale = getNum(form, "cfg_scale");
   const steps = getNum(form, "steps");
   const seed = getNum(form, "seed");
+  const negativePrompt =
+    (form.get("negative_prompt") as string | null)?.trim().slice(0, 512) || undefined;
 
   try {
     const b64 = await editImage({
@@ -58,6 +60,7 @@ export async function POST(req: NextRequest) {
       steps: steps !== undefined ? Math.round(steps) : undefined,
       seed: seed !== undefined ? Math.round(seed) : undefined,
       text_mode: form.get("text_mode") === "true" || form.get("text_mode") === "on",
+      negative_prompt: negativePrompt,
     });
 
     const imageUrl = await uploadImage(
