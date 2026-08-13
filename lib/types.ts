@@ -26,6 +26,6 @@ export interface ImageResult {
   id: string;
   mode: ImageMode;
   prompt: string;
-  imageB64: string; // data URL: data:image/png;base64,...
+  imageUrl: string;
   createdAt: number;
 }

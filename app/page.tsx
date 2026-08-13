@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, Image as ImageIcon, Wand2, AlertCircle, Compass, Braces, Calculator } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Wand2, AlertCircle, Compass, Braces, Calculator, History as HistoryIcon } from "lucide-react";
+import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GlassCard } from "@/components/ui/glass-card";
 import { PromptForm } from "@/components/prompt-form";
 import { ParamControls, GenParams } from "@/components/param-controls";
 import { ImageUpload } from "@/components/image-upload";
 import { ImageResultView } from "@/components/image-result";
-import { Gallery } from "@/components/gallery";
 import { AuthButton, notifyUserRefresh } from "@/components/auth-button";
 import { ImageResult } from "@/lib/types";
 
@@ -27,30 +27,25 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImageResult | null>(null);
-  const [history, setHistory] = useState<ImageResult[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyCount, setHistoryCount] = useState(0);
 
-  async function loadServerHistory() {
-    setHistoryLoading(true);
+  async function loadHistoryCount() {
     try {
-      const res = await fetch("/api/history?limit=40", { cache: "no-store" });
+      const res = await fetch("/api/history?limit=1", { cache: "no-store" });
       if (res.status === 401) {
-        setHistory([]);
+        setHistoryCount(0);
         return;
       }
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "加载历史失败");
-      setHistory((json.items as ImageResult[]) ?? []);
+      setHistoryCount(json.items?.length ?? 0);
     } catch {
-      setHistory([]);
-    } finally {
-      setHistoryLoading(false);
+      setHistoryCount(0);
     }
   }
 
   useEffect(() => {
-    void loadServerHistory();
-    const onRefresh = () => void loadServerHistory();
+    void loadHistoryCount();
+    const onRefresh = () => void loadHistoryCount();
     window.addEventListener("steppix:user-refresh", onRefresh);
     return () => window.removeEventListener("steppix:user-refresh", onRefresh);
   }, []);
@@ -70,6 +65,7 @@ export default function Home() {
 
     try {
       let b64: string;
+      let imageUrl: string;
       let id: string;
       let createdAt: number;
 
@@ -88,6 +84,7 @@ export default function Home() {
         }
         if (!res.ok) throw new Error(json.error || "生成失败");
         b64 = json.b64_json;
+        imageUrl = json.imageUrl;
         id = json.id;
         createdAt = json.createdAt ?? Date.now();
         if (typeof json.credits === "number") notifyUserRefresh();
@@ -114,6 +111,7 @@ export default function Home() {
         }
         if (!res.ok) throw new Error(json.error || "编辑失败");
         b64 = json.b64_json;
+        imageUrl = json.imageUrl;
         id = json.id;
         createdAt = json.createdAt ?? Date.now();
         if (typeof json.credits === "number") notifyUserRefresh();
@@ -123,51 +121,17 @@ export default function Home() {
         id: id || `${Date.now()}`,
         mode,
         prompt: prompt.trim(),
-        imageB64: `data:image/png;base64,${b64}`,
+        imageUrl,
         createdAt,
       };
       setResult(item);
-      setHistory((prev) => [item, ...prev.filter((x) => x.id !== item.id)]);
+      setHistoryCount((c) => c + 1);
     } catch (e: any) {
       setError(e?.message || "请求失败");
     } finally {
       setLoading(false);
     }
   }
-
-  async function handleDelete(id: string) {
-    try {
-      const res = await fetch(`/api/history?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
-      if (res.status === 401) {
-        setError("请先登录");
-        return;
-      }
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || "删除失败");
-      }
-      setHistory((prev) => prev.filter((x) => x.id !== id));
-      if (result?.id === id) setResult(null);
-    } catch (e: any) {
-      setError(e?.message || "删除失败");
-    }
-  }
-
-  // 登录回调错误提示（?auth_error=...）
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const sp = new URLSearchParams(window.location.search);
-    const authErr = sp.get("auth_error");
-    if (authErr) {
-      setError(`登录失败：${authErr}`);
-      const url = new URL(window.location.href);
-      url.searchParams.delete("auth_error");
-      url.searchParams.delete("auth");
-      window.history.replaceState({}, "", url.pathname + url.search);
-    }
-  }, []);
 
   return (
     <div className="min-h-screen">
@@ -197,6 +161,13 @@ export default function Home() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            <Link
+              href="/history"
+              className="flex items-center gap-1.5 rounded-xl border border-black/5 bg-bg-100 px-2.5 py-2 text-sm font-medium text-ink-500 transition hover:bg-bg-200 hover:text-ink-900"
+            >
+              <HistoryIcon className="h-4 w-4" />
+              <span className="hidden md:inline">历史</span>
+            </Link>
             <div className="hidden items-center rounded-xl border border-black/5 bg-bg-100 p-1 lg:inline-flex">
               <a
                 href="https://navigation.oneget.space"
@@ -258,7 +229,7 @@ export default function Home() {
             </GlassCard>
 
             {error ? (
-              <div className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+              <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -267,28 +238,30 @@ export default function Home() {
 
           <div className="space-y-6">
             <ImageResultView
-              image={result?.imageB64 ?? null}
+              image={result?.imageUrl ?? null}
               loading={loading}
               prompt={prompt}
               mode={mode}
             />
 
-            <GlassCard>
-              <h2 className="mb-4 text-sm font-semibold text-ink-900">
-                历史画廊
-                <span className="ml-2 text-xs font-normal text-ink-400">
-                  {historyLoading
-                    ? "加载中…"
-                    : `${history.length} 张 · 云端同步 · 点击查看大图`}
-                </span>
-              </h2>
-              <Gallery
-                items={history}
-                activeId={result?.id}
-                onSelect={(it) => setResult(it)}
-                onDelete={handleDelete}
-              />
-            </GlassCard>
+            <Link href="/history" className="block">
+              <GlassCard className="transition hover:border-brand-violet/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <HistoryIcon className="h-5 w-5 text-brand-violet" />
+                    <div>
+                      <p className="text-sm font-semibold text-ink-900">历史画廊</p>
+                      <p className="text-xs text-ink-400">
+                        {historyCount > 0
+                          ? `${historyCount} 张作品 · 点击查看全部并下载`
+                          : "点击查看全部历史记录"}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-sm text-ink-400">→</span>
+                </div>
+              </GlassCard>
+            </Link>
           </div>
         </div>
 

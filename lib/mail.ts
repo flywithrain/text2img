@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { prisma } from "@/lib/db";
 import {
   generateOtpCode,
@@ -7,17 +7,9 @@ import {
   OTP_TTL_MS,
 } from "@/lib/credits";
 
-function getSmtpConfig() {
-  const host = process.env.SMTP_HOST ?? "smtp.qq.com";
-  const port = Number(process.env.SMTP_PORT) || 465;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM ?? user;
-  if (!user || !pass) {
-    throw new Error("未配置 SMTP_USER / SMTP_PASS（QQ 邮箱授权码）");
-  }
-  return { host, port, user, pass, from: from! };
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const FROM = process.env.SMTP_FROM ?? "onboarding@resend.dev";
 
 export async function sendOtpEmail(rawEmail: string): Promise<{ ok: true; cooldownSec: number }> {
   const email = normalizeEmail(rawEmail);
@@ -39,6 +31,7 @@ export async function sendOtpEmail(rawEmail: string): Promise<{ ok: true; cooldo
 
   const code = generateOtpCode();
   const expiresAt = new Date(Date.now() + OTP_TTL_MS);
+  const ttlMin = Math.ceil(OTP_TTL_MS / 60000);
 
   // 开发模式：不发真邮件，打印验证码
   if (process.env.OTP_DEV_MODE === "1" || process.env.OTP_DEV_MODE === "true") {
@@ -47,21 +40,17 @@ export async function sendOtpEmail(rawEmail: string): Promise<{ ok: true; cooldo
     return { ok: true, cooldownSec: Math.ceil(OTP_COOLDOWN_MS / 1000) };
   }
 
-  const smtp = getSmtpConfig();
-  const transporter = nodemailer.createTransport({
-    host: smtp.host,
-    port: smtp.port,
-    secure: smtp.port === 465,
-    auth: { user: smtp.user, pass: smtp.pass },
+  const { error } = await resend.emails.send({
+    from: `StepPix <${FROM}>`,
+    to: email,
+    subject: "StepPix 注册验证码",
+    text: `您的注册验证码是：${code}\n\n${ttlMin} 分钟内有效，请勿泄露给他人。`,
+    html: `<p>您的注册验证码是：</p><p style="font-size:24px;font-weight:bold;letter-spacing:4px">${code}</p><p>${ttlMin} 分钟内有效，请勿泄露给他人。</p>`,
   });
 
-  await transporter.sendMail({
-    from: `"StepPix" <${smtp.from}>`,
-    to: email,
-    subject: "StepPix 登录验证码",
-    text: `您的登录验证码是：${code}\n\n${Math.ceil(OTP_TTL_MS / 60000)} 分钟内有效，请勿泄露给他人。`,
-    html: `<p>您的登录验证码是：</p><p style="font-size:24px;font-weight:bold;letter-spacing:4px">${code}</p><p>${Math.ceil(OTP_TTL_MS / 60000)} 分钟内有效，请勿泄露给他人。</p>`,
-  });
+  if (error) {
+    throw new Error(`邮件发送失败：${error.message}`);
+  }
 
   await prisma.otpCode.create({ data: { email, code, expiresAt } });
   return { ok: true, cooldownSec: Math.ceil(OTP_COOLDOWN_MS / 1000) };

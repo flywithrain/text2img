@@ -3,19 +3,10 @@
 import { Download, Share2, Loader2, Sparkles } from "lucide-react";
 
 interface Props {
-  image: string | null; // data URL
+  image: string | null; // data URL 或 Blob URL
   loading: boolean;
   prompt: string;
   mode: "generation" | "edit";
-}
-
-function dataUrlToFile(dataUrl: string, filename: string): File {
-  const [head, b64] = dataUrl.split(",");
-  const mime = head.match(/:(.*?);/)?.[1] ?? "image/png";
-  const bin = atob(b64);
-  const arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return new File([arr], filename, { type: mime });
 }
 
 export function ImageResultView({ image, loading, prompt, mode }: Props) {
@@ -23,20 +14,20 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
     if (!image) return;
     const a = document.createElement("a");
     a.href = image;
-    a.download = `stepfun-${Date.now()}.png`;
+    a.download = `steppix-${Date.now()}.png`;
+    a.target = "_blank";
     a.click();
   };
 
   const handleShare = async () => {
     if (!image) return;
-    const file = dataUrlToFile(image, `stepfun-${Date.now()}.png`);
     try {
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "StepFun 创作", text: prompt });
+      if (navigator.share) {
+        await navigator.share({ title: "StepPix 创作", text: prompt, url: image });
         return;
       }
     } catch {
-      /* 用户取消或不支持，回退到复制提示词 */
+      /* 用户取消或不支持 */
     }
     try {
       await navigator.clipboard.writeText(prompt);

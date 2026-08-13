@@ -4,6 +4,7 @@ import {
   unauthorized,
 } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { deleteImage } from "@/lib/blob";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   if (!userId) return unauthorized();
 
   const { searchParams } = req.nextUrl;
-  const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 40));
+  const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 100));
   const cursor = searchParams.get("cursor");
 
   const rows = await prisma.generation.findMany({
@@ -33,9 +34,7 @@ export async function GET(req: NextRequest) {
     id: r.id,
     mode: r.mode as "generation" | "edit",
     prompt: r.prompt,
-    imageB64: r.imageB64.startsWith("data:")
-      ? r.imageB64
-      : `data:image/png;base64,${r.imageB64}`,
+    imageUrl: r.imageUrl,
     createdAt: r.createdAt.getTime(),
     seed: r.seed ?? undefined,
     cfgScale: r.cfgScale ?? undefined,
@@ -66,6 +65,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "记录不存在" }, { status: 404 });
   }
 
+  await deleteImage(row.imageUrl);
   await prisma.generation.delete({ where: { id } });
   return NextResponse.json(
     { ok: true },

@@ -5,7 +5,7 @@ import { ImageResult } from "@/lib/types";
 
 interface Props {
   items: ImageResult[];
-  onSelect: (item: ImageResult) => void;
+  onSelect?: (item: ImageResult) => void;
   onDelete: (id: string) => void;
   activeId?: string;
 }
@@ -14,7 +14,7 @@ export function Gallery({ items, onSelect, onDelete, activeId }: Props) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-ink-500">
-        暂无历史记录。登录后生成的图片与提示词会保存到服务端，可在此查看。
+        暂无历史记录。登录后生成的图片会保存到云端，可在此查看与下载。
       </p>
     );
   }
@@ -28,14 +28,23 @@ export function Gallery({ items, onSelect, onDelete, activeId }: Props) {
             activeId === it.id ? "border-brand-violet" : "border-black/5"
           }`}
         >
-          <button type="button" onClick={() => onSelect(it)} className="block w-full">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+          {onSelect ? (
+            <button type="button" onClick={() => onSelect(it)} className="block w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={it.imageUrl}
+                alt={it.prompt}
+                className="aspect-square w-full object-cover transition duration-300 group-hover:scale-105"
+              />
+            </button>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={it.imageB64}
+              src={it.imageUrl}
               alt={it.prompt}
               className="aspect-square w-full object-cover transition duration-300 group-hover:scale-105"
             />
-          </button>
+          )}
           <div className="absolute inset-x-0 top-0 truncate bg-gradient-to-b from-black/70 to-transparent p-2 text-[10px] text-white/90 opacity-0 transition group-hover:opacity-100">
             {it.prompt}
           </div>
@@ -49,8 +58,10 @@ export function Gallery({ items, onSelect, onDelete, activeId }: Props) {
               <Trash2 className="h-4 w-4" />
             </button>
             <a
-              href={it.imageB64}
-              download={`stepfun-${it.id}.png`}
+              href={it.imageUrl}
+              download={`steppix-${it.id}.png`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-md bg-black/40 p-1.5 text-white transition hover:bg-brand-violet/70"
               aria-label="下载"
             >

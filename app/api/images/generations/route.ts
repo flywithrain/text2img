@@ -7,6 +7,7 @@ import {
   unauthorized,
 } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { uploadImage, deleteImage, MAX_HISTORY } from "@/lib/blob";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,7 +54,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const b64 = await generateImage(payload);
-    const imageB64 = `data:image/png;base64,${b64}`;
+
+    const imageUrl = await uploadImage(
+      b64,
+      `gen/${userId}/${Date.now()}.png`,
+    );
 
     const [gen, updated] = await prisma.$transaction([
       prisma.generation.create({
@@ -61,7 +66,7 @@ export async function POST(req: NextRequest) {
           userId,
           mode: "generation",
           prompt,
-          imageB64,
+          imageUrl,
           seed: seed ?? null,
           cfgScale: cfgScale ?? null,
           steps: steps ?? null,
@@ -73,9 +78,24 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
+    // 超过上限时删除最旧的记录及其 Blob
+    const excess = await prisma.generation.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      skip: MAX_HISTORY,
+      select: { id: true, imageUrl: true },
+    });
+    if (excess.length > 0) {
+      await Promise.all(excess.map((e) => deleteImage(e.imageUrl)));
+      await prisma.generation.deleteMany({
+        where: { id: { in: excess.map((e) => e.id) } },
+      });
+    }
+
     return NextResponse.json(
       {
         b64_json: b64,
+        imageUrl,
         id: gen.id,
         createdAt: gen.createdAt.getTime(),
         credits: updated.credits,

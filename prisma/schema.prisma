@@ -44,7 +44,7 @@ model OtpCode {
   @@index([email, code])
 }
 
-/// 生图 / 编辑历史（存 base64 或 data URL）
+/// 生图 / 编辑历史（图片存 Vercel Blob，数据库只存 URL）
 model Generation {
   id        String   @id @default(cuid())
   userId    String
@@ -52,8 +52,8 @@ model Generation {
   /// generation | edit
   mode      String
   prompt    String
-  /// data:image/png;base64,... 或纯 base64
-  imageB64  String
+  /// Vercel Blob 公开访问 URL
+  imageUrl  String
   seed      Int?
   cfgScale  Float?
   steps     Int?

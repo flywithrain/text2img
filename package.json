@@ -12,24 +12,21 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.8.0",
-    "better-sqlite3": "^12.11.1",
+    "@vercel/blob": "^2.8.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
     "lucide-react": "^0.460.0",
     "next": "14.2.15",
-    "nodemailer": "^9.0.3",
     "pg": "^8.23.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "resend": "^6.19.0",
     "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.16.0",
-    "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.21.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
