@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { LogIn, LogOut, User as UserIcon, Coins, ChevronDown } from "lucide-react";
+import { LogIn, LogOut, User as UserIcon, Coins, ChevronDown, History as HistoryIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/lib/user-types";
 
@@ -123,6 +123,14 @@ export function AuthButton() {
             >
               <UserIcon className="h-4 w-4" />
               个人资料 / 签到
+            </Link>
+            <Link
+              href="/profile#history"
+              className="flex items-center gap-2 px-3 py-2.5 text-sm text-ink-900 transition hover:bg-bg-100"
+              onClick={() => setMenuOpen(false)}
+            >
+              <HistoryIcon className="h-4 w-4" />
+              生图历史
             </Link>
             <button
               type="button"

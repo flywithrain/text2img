@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Sparkles, Image as ImageIcon, Wand2, AlertCircle, Compass, Braces, Calculator, History as HistoryIcon } from "lucide-react";
-import Link from "next/link";
+import { useState } from "react";
+import { Sparkles, Image as ImageIcon, Wand2, AlertCircle, Compass, Braces, Calculator } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GlassCard } from "@/components/ui/glass-card";
 import { PromptForm } from "@/components/prompt-form";
@@ -29,28 +28,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImageResult | null>(null);
-  const [historyCount, setHistoryCount] = useState(0);
-
-  async function loadHistoryCount() {
-    try {
-      const res = await fetch("/api/history?limit=1", { cache: "no-store" });
-      if (res.status === 401) {
-        setHistoryCount(0);
-        return;
-      }
-      const json = await res.json();
-      setHistoryCount(json.items?.length ?? 0);
-    } catch {
-      setHistoryCount(0);
-    }
-  }
-
-  useEffect(() => {
-    void loadHistoryCount();
-    const onRefresh = () => void loadHistoryCount();
-    window.addEventListener("steppix:user-refresh", onRefresh);
-    return () => window.removeEventListener("steppix:user-refresh", onRefresh);
-  }, []);
 
   const handleParams = (next: Partial<GenParams>) =>
     setParams((p) => ({ ...p, ...next }));
@@ -140,7 +117,6 @@ export default function Home() {
         createdAt,
       };
       setResult(item);
-      setHistoryCount((c) => c + 1);
     } catch (e: any) {
       setError(e?.message || "请求失败");
     } finally {
@@ -176,13 +152,6 @@ export default function Home() {
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          <Link
-            href="/history"
-            className="flex items-center gap-1.5 rounded-xl border border-black/5 bg-bg-100 px-2.5 py-2 text-sm font-medium text-ink-500 transition hover:bg-bg-200 hover:text-ink-900"
-          >
-            <HistoryIcon className="h-4 w-4" />
-            <span className="hidden md:inline">历史</span>
-          </Link>
           <div className="hidden items-center rounded-xl border border-black/5 bg-bg-100 p-1 lg:inline-flex">
             <a
               href="https://navigation.oneget.space"
@@ -267,25 +236,6 @@ export default function Home() {
                 prompt={prompt}
                 mode={mode}
               />
-
-              <Link href="/history" className="block">
-                <GlassCard className="transition hover:border-brand-violet/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <HistoryIcon className="h-5 w-5 text-brand-violet" />
-                      <div>
-                        <p className="text-sm font-semibold text-ink-900">历史画廊</p>
-                        <p className="text-xs text-ink-400">
-                          {historyCount > 0
-                            ? `${historyCount} 张作品 · 点击查看全部并下载`
-                            : "点击查看全部历史记录"}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-sm text-ink-400">→</span>
-                  </div>
-                </GlassCard>
-              </Link>
             </div>
           </div>
         </main>

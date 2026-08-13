@@ -8,23 +8,29 @@ import {
   Coins,
   Loader2,
   Mail,
-  Shield,
   User as UserIcon,
   Wand2,
-  Compass,
-  Braces,
-  Calculator,
+  History as HistoryIcon,
+  Download,
+  Sparkles,
+  Hash,
+  CalendarDays,
+  LogIn,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
+import { Gallery } from "@/components/gallery";
 import { AuthButton } from "@/components/auth-button";
 import type { PublicUser } from "@/lib/user-types";
+import type { ImageResult } from "@/lib/types";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<PublicUser | null | undefined>(undefined);
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [items, setItems] = useState<ImageResult[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
@@ -36,9 +42,36 @@ export default function ProfilePage() {
     }
   }, []);
 
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch("/api/history?limit=100", { cache: "no-store" });
+      if (res.status === 401) {
+        setItems([]);
+        return;
+      }
+      const json = await res.json();
+      setItems(json.items ?? []);
+    } catch {
+      setItems([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+    void loadHistory();
+  }, [refresh, loadHistory]);
+
+  useEffect(() => {
+    const handler = () => {
+      void refresh();
+      void loadHistory();
+    };
+    window.addEventListener("steppix:user-refresh", handler);
+    return () => window.removeEventListener("steppix:user-refresh", handler);
+  }, [refresh, loadHistory]);
 
   async function checkIn() {
     setChecking(true);
@@ -58,6 +91,33 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/history?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || "删除失败");
+      }
+      setItems((prev) => prev.filter((x) => x.id !== id));
+    } catch (e: any) {
+      setError(e?.message || "删除失败");
+    }
+  }
+
+  function downloadAll() {
+    items.forEach((it, i) => {
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = it.imageUrl;
+        a.download = `steppix-${it.id}.png`;
+        a.target = "_blank";
+        a.click();
+      }, i * 300);
+    });
+  }
+
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Shanghai",
     year: "numeric",
@@ -67,9 +127,10 @@ export default function ProfilePage() {
   const already = user?.lastCheckIn === today;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-bg-100">
+      {/* 顶部导航 */}
       <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-black/5 bg-bg-50/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-full max-w-3xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-full max-w-5xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -82,58 +143,29 @@ export default function ProfilePage() {
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple">
                 <Wand2 className="h-4 w-4 text-white" />
               </span>
-              <span className="font-bold">个人资料</span>
+              <span className="font-bold">个人中心</span>
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden items-center rounded-xl border border-black/5 bg-bg-100 p-1 lg:inline-flex">
-              <a
-                href="https://navigation.oneget.space"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
-              >
-                <Compass className="h-4 w-4" />
-                <span>资源导航</span>
-              </a>
-              <a
-                href="https://json-tool.oneget.space"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
-              >
-                <Braces className="h-4 w-4" />
-                <span>开发工具</span>
-              </a>
-              <a
-                href="https://calculator-tool.oneget.space"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-ink-500 transition-all duration-200 hover:text-ink-900"
-              >
-                <Calculator className="h-4 w-4" />
-                <span>计算器大全</span>
-              </a>
-            </div>
-            <AuthButton />
-          </div>
+          <AuthButton />
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pb-16 pt-24 sm:px-6">
+      <main className="mx-auto max-w-5xl px-4 pb-16 pt-24 sm:px-6">
         {user === undefined ? (
-          <div className="h-40 animate-pulse rounded-2xl bg-bg-100" />
+          <div className="h-40 animate-pulse rounded-2xl bg-bg-200" />
         ) : !user ? (
           <GlassCard className="text-center">
-            <p className="mb-4 text-ink-500">请先登录后查看个人资料</p>
-            <Link href="/">
-              <Button variant="primary">返回首页登录</Button>
+            <LogIn className="mx-auto mb-4 h-10 w-10 text-ink-300" />
+            <p className="mb-4 text-ink-500">请先登录后查看个人中心</p>
+            <Link href="/login?redirect=/profile">
+              <Button variant="primary">去登录</Button>
             </Link>
           </GlassCard>
         ) : (
           <div className="space-y-5">
+            {/* 个人信息卡片 */}
             <GlassCard>
-              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
                 {user.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -143,7 +175,7 @@ export default function ProfilePage() {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-violet/25">
+                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-violet/15">
                     <UserIcon className="h-8 w-8 text-brand-violet" />
                   </span>
                 )}
@@ -151,43 +183,72 @@ export default function ProfilePage() {
                   <h1 className="truncate text-xl font-bold text-ink-900">
                     {user.displayName || user.username}
                   </h1>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-500">
-                    <span className="inline-flex items-center gap-1">
-                      <Shield className="h-3.5 w-3.5" />
-                      {user.provider === "linuxdo" ? "Linux.do" : "邮箱注册"}
-                    </span>
-                    {user.email ? (
-                      <span className="inline-flex items-center gap-1 truncate">
-                        <Mail className="h-3.5 w-3.5" />
-                        {user.email}
-                      </span>
-                    ) : null}
-                    {user.trustLevel != null ? (
-                      <span>信任等级 TL{user.trustLevel}</span>
-                    ) : null}
-                  </p>
-                  <p className="mt-1 text-xs text-ink-300">
-                    注册于 {new Date(user.createdAt).toLocaleString("zh-CN")}
+                  <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-500">
+                    <Mail className="h-3.5 w-3.5" />
+                    {user.email || user.username}
                   </p>
                 </div>
+                <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2">
+                  <Coins className="h-5 w-5 text-amber-600" />
+                  <div>
+                    <p className="text-xs text-ink-400">剩余积分</p>
+                    <p className="text-lg font-bold tabular-nums text-amber-600">
+                      {user.credits}
+                    </p>
+                  </div>
+                </div>
               </div>
+
+              {/* 注册信息明细 */}
+              <dl className="mt-5 grid grid-cols-1 gap-3 border-t border-black/5 pt-5 sm:grid-cols-2">
+                <div className="flex items-center gap-2.5 text-sm">
+                  <Hash className="h-4 w-4 shrink-0 text-ink-300" />
+                  <dt className="text-ink-400">用户 ID</dt>
+                  <dd className="truncate font-mono text-xs text-ink-700">{user.id}</dd>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm">
+                  <UserIcon className="h-4 w-4 shrink-0 text-ink-300" />
+                  <dt className="text-ink-400">用户名</dt>
+                  <dd className="text-ink-900">{user.username}</dd>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm">
+                  <Mail className="h-4 w-4 shrink-0 text-ink-300" />
+                  <dt className="text-ink-400">邮箱</dt>
+                  <dd className="text-ink-900">{user.email || "—"}</dd>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm">
+                  <CalendarDays className="h-4 w-4 shrink-0 text-ink-300" />
+                  <dt className="text-ink-400">注册时间</dt>
+                  <dd className="text-ink-900">
+                    {new Date(user.createdAt).toLocaleString("zh-CN", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </dd>
+                </div>
+              </dl>
             </GlassCard>
 
+            {/* 签到卡片 */}
             <GlassCard>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-sm font-semibold text-ink-900">
-                  <Coins className="h-4 w-4 text-amber-600" />
-                  生图次数
-                </h2>
-                <span className="text-2xl font-bold tabular-nums text-amber-600">
-                  {user.credits}
-                </span>
-              </div>
-              <p className="mb-4 text-sm text-ink-500">
-                每次文生图或图像编辑消耗 1 次。新用户注册赠送 20 次；每日签到可随机获得 10–20 次。
-              </p>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-ink-900">
+                    <CalendarCheck className="h-4 w-4 text-brand-violet" />
+                    每日签到
+                  </h2>
+                  <p className="mt-1 text-sm text-ink-500">
+                    每日签到可随机获得 10–20 积分，每次生图消耗 1 积分。
+                  </p>
+                  {user.lastCheckIn ? (
+                    <p className="mt-1 text-xs text-ink-400">
+                      上次签到：{user.lastCheckIn}
+                    </p>
+                  ) : null}
+                </div>
                 <Button
                   variant="primary"
                   disabled={already || checking}
@@ -195,26 +256,14 @@ export default function ProfilePage() {
                   className="sm:w-auto"
                 >
                   {checking ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> 签到中…
-                    </>
+                    <><Loader2 className="h-4 w-4 animate-spin" /> 签到中…</>
                   ) : already ? (
-                    <>
-                      <CalendarCheck className="h-4 w-4" /> 今日已签到
-                    </>
+                    <><CalendarCheck className="h-4 w-4" /> 今日已签到</>
                   ) : (
-                    <>
-                      <CalendarCheck className="h-4 w-4" /> 每日签到
-                    </>
+                    <><CalendarCheck className="h-4 w-4" /> 立即签到</>
                   )}
                 </Button>
-                {user.lastCheckIn ? (
-                  <span className="text-xs text-ink-400">
-                    上次签到：{user.lastCheckIn}
-                  </span>
-                ) : null}
               </div>
-
               {message ? (
                 <p className="mt-3 text-sm text-emerald-600">{message}</p>
               ) : null}
@@ -223,26 +272,47 @@ export default function ProfilePage() {
               ) : null}
             </GlassCard>
 
-            <GlassCard>
-              <h2 className="mb-2 text-sm font-semibold text-ink-900">账号信息</h2>
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-ink-500">用户 ID</dt>
-                  <dd className="truncate font-mono text-xs text-ink-900">
-                    {user.id}
-                  </dd>
+            {/* 历史画廊 */}
+            <GlassCard id="history" className="scroll-mt-20">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <HistoryIcon className="h-5 w-5 text-brand-violet" />
+                  <div>
+                    <h2 className="text-sm font-semibold text-ink-900">生图历史</h2>
+                    <p className="text-xs text-ink-400">
+                      {historyLoading
+                        ? "加载中…"
+                        : `${items.length} / 100 张 · 图片 · 提示词 · 时间`}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-ink-500">用户名</dt>
-                  <dd className="text-ink-900">{user.username}</dd>
+                {items.length > 0 ? (
+                  <Button variant="outline" className="h-8" onClick={downloadAll}>
+                    <Download className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">全部下载</span>
+                  </Button>
+                ) : null}
+              </div>
+
+              {historyLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-brand-violet" />
                 </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-ink-500">登录方式</dt>
-                  <dd className="text-ink-900">
-                    {user.provider === "linuxdo" ? "Linux.do OAuth" : "邮箱 + 密码"}
-                  </dd>
+              ) : items.length > 0 ? (
+                <Gallery items={items} onDelete={handleDelete} />
+              ) : (
+                <div className="flex flex-col items-center gap-3 py-12 text-center">
+                  <Sparkles className="h-8 w-8 text-ink-300" />
+                  <p className="text-sm text-ink-400">
+                    还没有生成过图片，去试试吧
+                  </p>
+                  <Link href="/">
+                    <Button variant="outline" className="h-8">
+                      开始创作
+                    </Button>
+                  </Link>
                 </div>
-              </dl>
+              )}
             </GlassCard>
           </div>
         )}
