@@ -1,7 +1,7 @@
 export type ImageMode = "generation" | "edit";
 
-export const STEP_MODEL =
-  (process.env.STEP_MODEL as string) || "step-image-edit-2";
+export const IMAGE_MODEL =
+  (process.env.IMAGE_MODEL_NAME as string) || "step-image-edit-2";
 
 export const IMAGE_SIZES = [
   { label: "方形 1024×1024", value: "1024x1024" },
@@ -12,7 +12,7 @@ export const IMAGE_SIZES = [
 ] as const;
 
 export interface GenerateRequest {
-  model: typeof STEP_MODEL;
+  model: typeof IMAGE_MODEL;
   prompt: string;
   response_format: "b64_json";
   cfg_scale?: number;

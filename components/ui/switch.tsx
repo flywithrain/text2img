@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface SwitchProps {
@@ -19,7 +19,7 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
       <span
         className={cn(
           "relative h-6 w-11 rounded-full transition-colors duration-200",
-          checked ? "bg-gradient-to-r from-brand-indigo to-brand-purple" : "bg-black/10",
+          checked ? "bg-gradient-to-r from-brand-sky to-brand-meadow" : "bg-black/10",
         )}
       >
         <span

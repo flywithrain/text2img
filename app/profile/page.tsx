@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -11,26 +11,20 @@ import {
   User as UserIcon,
   Wand2,
   History as HistoryIcon,
-  Download,
-  Sparkles,
   Hash,
   CalendarDays,
   LogIn,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
-import { Gallery } from "@/components/gallery";
 import { AuthButton } from "@/components/auth-button";
 import type { PublicUser } from "@/lib/user-types";
-import type { ImageResult } from "@/lib/types";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<PublicUser | null | undefined>(undefined);
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [items, setItems] = useState<ImageResult[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
@@ -42,36 +36,15 @@ export default function ProfilePage() {
     }
   }, []);
 
-  const loadHistory = useCallback(async () => {
-    setHistoryLoading(true);
-    try {
-      const res = await fetch("/api/history?limit=100", { cache: "no-store" });
-      if (res.status === 401) {
-        setItems([]);
-        return;
-      }
-      const json = await res.json();
-      setItems(json.items ?? []);
-    } catch {
-      setItems([]);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     void refresh();
-    void loadHistory();
-  }, [refresh, loadHistory]);
+  }, [refresh]);
 
   useEffect(() => {
-    const handler = () => {
-      void refresh();
-      void loadHistory();
-    };
-    window.addEventListener("steppix:user-refresh", handler);
-    return () => window.removeEventListener("steppix:user-refresh", handler);
-  }, [refresh, loadHistory]);
+    const handler = () => void refresh();
+    window.addEventListener("PixSpring:user-refresh", handler);
+    return () => window.removeEventListener("PixSpring:user-refresh", handler);
+  }, [refresh]);
 
   async function checkIn() {
     setChecking(true);
@@ -83,39 +56,12 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error(json.error || "签到失败");
       setUser(json.user);
       setMessage(`签到成功！获得 ${json.gained} 次生图机会`);
-      window.dispatchEvent(new Event("steppix:user-refresh"));
+      window.dispatchEvent(new Event("PixSpring:user-refresh"));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "签到失败");
     } finally {
       setChecking(false);
     }
-  }
-
-  async function handleDelete(id: string) {
-    try {
-      const res = await fetch(`/api/history?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || "删除失败");
-      }
-      setItems((prev) => prev.filter((x) => x.id !== id));
-    } catch (e: any) {
-      setError(e?.message || "删除失败");
-    }
-  }
-
-  function downloadAll() {
-    items.forEach((it, i) => {
-      setTimeout(() => {
-        const a = document.createElement("a");
-        a.href = it.imageUrl;
-        a.download = `steppix-${it.id}.png`;
-        a.target = "_blank";
-        a.click();
-      }, i * 300);
-    });
   }
 
   const today = new Intl.DateTimeFormat("en-CA", {
@@ -140,7 +86,7 @@ export default function ProfilePage() {
               返回
             </Link>
             <span className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-sky to-brand-meadow">
                 <Wand2 className="h-4 w-4 text-white" />
               </span>
               <span className="font-bold">个人中心</span>
@@ -175,8 +121,8 @@ export default function ProfilePage() {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-violet/15">
-                    <UserIcon className="h-8 w-8 text-brand-violet" />
+                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-sky/15">
+                    <UserIcon className="h-8 w-8 text-brand-sky" />
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
@@ -237,7 +183,7 @@ export default function ProfilePage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-ink-900">
-                    <CalendarCheck className="h-4 w-4 text-brand-violet" />
+                    <CalendarCheck className="h-4 w-4 text-brand-sky" />
                     每日签到
                   </h2>
                   <p className="mt-1 text-sm text-ink-500">
@@ -272,48 +218,21 @@ export default function ProfilePage() {
               ) : null}
             </GlassCard>
 
-            {/* 历史画廊 */}
-            <GlassCard id="history" className="scroll-mt-20">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <HistoryIcon className="h-5 w-5 text-brand-violet" />
-                  <div>
-                    <h2 className="text-sm font-semibold text-ink-900">生图历史</h2>
-                    <p className="text-xs text-ink-400">
-                      {historyLoading
-                        ? "加载中…"
-                        : `${items.length} / 100 张 · 图片 · 提示词 · 时间`}
-                    </p>
+            {/* 快捷入口 */}
+            <Link href="/history" className="block">
+              <GlassCard className="transition hover:border-brand-sky/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <HistoryIcon className="h-5 w-5 text-brand-sky" />
+                    <div>
+                      <p className="text-sm font-semibold text-ink-900">生图历史</p>
+                      <p className="text-xs text-ink-400">查看全部历史作品并下载</p>
+                    </div>
                   </div>
+                  <span className="text-sm text-ink-400">→</span>
                 </div>
-                {items.length > 0 ? (
-                  <Button variant="outline" className="h-8" onClick={downloadAll}>
-                    <Download className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">全部下载</span>
-                  </Button>
-                ) : null}
-              </div>
-
-              {historyLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-brand-violet" />
-                </div>
-              ) : items.length > 0 ? (
-                <Gallery items={items} onDelete={handleDelete} />
-              ) : (
-                <div className="flex flex-col items-center gap-3 py-12 text-center">
-                  <Sparkles className="h-8 w-8 text-ink-300" />
-                  <p className="text-sm text-ink-400">
-                    还没有生成过图片，去试试吧
-                  </p>
-                  <Link href="/">
-                    <Button variant="outline" className="h-8">
-                      开始创作
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </GlassCard>
+              </GlassCard>
+            </Link>
           </div>
         )}
       </main>

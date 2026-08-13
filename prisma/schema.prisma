@@ -24,6 +24,8 @@ model User {
   avatarUrl    String?
   /// 剩余生图次数
   credits      Int      @default(20)
+  /// 是否管理员
+  isAdmin      Boolean  @default(false)
   /// 上次签到日期 YYYY-MM-DD（UTC+8）
   lastCheckIn  String?
   createdAt    DateTime @default(now())

@@ -1,6 +1,6 @@
-import { ImageResult } from "./types";
+﻿import { ImageResult } from "./types";
 
-const KEY = "stepfun_history_v1";
+const KEY = "_history_v1";
 const MAX_ITEMS = 60;
 
 export function loadHistory(): ImageResult[] {

@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { LogIn, LogOut, User as UserIcon, Coins, ChevronDown, History as HistoryIcon } from "lucide-react";
+import { LogIn, LogOut, User as UserIcon, ChevronDown, History as HistoryIcon, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/lib/user-types";
 
@@ -28,8 +28,8 @@ export function AuthButton() {
   // 供页面在积分变化后刷新
   useEffect(() => {
     const handler = () => void refresh();
-    window.addEventListener("steppix:user-refresh", handler);
-    return () => window.removeEventListener("steppix:user-refresh", handler);
+    window.addEventListener("PixSpring:user-refresh", handler);
+    return () => window.removeEventListener("PixSpring:user-refresh", handler);
   }, [refresh]);
 
   async function logout() {
@@ -38,7 +38,7 @@ export function AuthButton() {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
       setMenuOpen(false);
-      window.dispatchEvent(new Event("steppix:user-refresh"));
+      window.dispatchEvent(new Event("PixSpring:user-refresh"));
     } finally {
       setBusy(false);
     }
@@ -71,29 +71,23 @@ export function AuthButton() {
       <button
         type="button"
         onClick={() => setMenuOpen((v) => !v)}
-        className="flex max-w-[11rem] items-center gap-2 rounded-xl border border-black/10 bg-white px-2.5 py-1.5 transition hover:bg-bg-200 sm:max-w-[14rem]"
+        className="flex h-9 max-w-[11rem] items-center gap-2 rounded-xl border border-black/10 bg-white px-2.5 transition hover:bg-bg-200 sm:max-w-[14rem]"
       >
         {user.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={user.avatarUrl}
             alt=""
-            className="h-6 w-6 shrink-0 rounded-full object-cover"
+            className="h-5 w-5 shrink-0 rounded-full object-cover"
             referrerPolicy="no-referrer"
           />
         ) : (
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-violet/15">
-            <UserIcon className="h-3.5 w-3.5 text-brand-violet" />
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-sky/15">
+            <UserIcon className="h-3 w-3 text-brand-sky" />
           </span>
         )}
-        <span className="min-w-0 flex-1 text-left">
-          <span className="block truncate text-xs font-medium text-ink-900 sm:text-sm">
-            {label}
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-amber-600 sm:text-xs">
-            <Coins className="h-3 w-3" />
-            {user.credits} 次
-          </span>
+        <span className="min-w-0 flex-1 truncate text-left text-xs font-medium text-ink-900 sm:text-sm">
+          {label}
         </span>
         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-ink-400" />
       </button>
@@ -112,9 +106,6 @@ export function AuthButton() {
               <p className="truncate text-xs text-ink-400">
                 {user.email || user.username}
               </p>
-              <p className="mt-1 text-xs text-amber-600">
-                剩余生图 {user.credits} 次
-              </p>
             </div>
             <Link
               href="/profile"
@@ -125,13 +116,23 @@ export function AuthButton() {
               个人资料 / 签到
             </Link>
             <Link
-              href="/profile#history"
+              href="/history"
               className="flex items-center gap-2 px-3 py-2.5 text-sm text-ink-900 transition hover:bg-bg-100"
               onClick={() => setMenuOpen(false)}
             >
               <HistoryIcon className="h-4 w-4" />
               生图历史
             </Link>
+            {user.isAdmin ? (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 px-3 py-2.5 text-sm text-ink-900 transition hover:bg-bg-100"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Shield className="h-4 w-4" />
+                用户管理
+              </Link>
+            ) : null}
             <button
               type="button"
               className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-ink-500 transition hover:bg-bg-100 hover:text-ink-900"
@@ -150,6 +151,6 @@ export function AuthButton() {
 
 export function notifyUserRefresh() {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("steppix:user-refresh"));
+    window.dispatchEvent(new Event("PixSpring:user-refresh"));
   }
 }

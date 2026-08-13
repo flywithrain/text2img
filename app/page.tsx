@@ -129,12 +129,12 @@ export default function Home() {
       {/* 顶部导航 */}
       <header className="z-50 flex h-16 shrink-0 items-center justify-between border-b border-black/5 bg-bg-50/80 px-4 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple shadow-lg shadow-brand-violet/30">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-sky to-brand-meadow shadow-lg shadow-brand-sky/30">
             <Wand2 className="h-5 w-5 text-white" />
           </span>
-          <span className="hidden text-lg font-bold tracking-tight text-ink-900 sm:inline">StepPix</span>
+          <span className="hidden text-lg font-bold tracking-tight text-ink-900 sm:inline">PixSpring</span>
           <span className="hidden text-xs text-ink-400 sm:inline">
-            AI 文生图 · 由 StepFun 驱动
+            AI 文生图
           </span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">

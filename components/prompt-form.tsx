@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Sparkles, Loader2 } from "lucide-react";
 
@@ -39,7 +39,7 @@ export function PromptForm({
         type="button"
         onClick={onSubmit}
         disabled={loading || !prompt.trim()}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-indigo to-brand-purple px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-violet/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-brand-violet/50 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-sky to-brand-meadow px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-sky/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-brand-sky/50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

@@ -8,6 +8,7 @@ export type PublicUser = {
   avatarUrl: string | null;
   trustLevel: number | null;
   credits: number;
+  isAdmin: boolean;
   lastCheckIn: string | null;
   createdAt: string;
 };

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -58,7 +58,7 @@ export function TabsTrigger({
       className={cn(
         "rounded-lg px-4 py-1.5 text-sm font-medium transition-all duration-200 cursor-pointer",
         active
-          ? "bg-gradient-to-r from-brand-indigo to-brand-purple text-white shadow"
+          ? "bg-gradient-to-r from-brand-sky to-brand-meadow text-white shadow"
           : "text-ink-500 hover:text-ink-900",
         className,
       )}

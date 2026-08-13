@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { UploadCloud, X } from "lucide-react";
@@ -23,7 +23,7 @@ export function ImageUpload({ file, onChange }: Props) {
       <span className="label-text">参考图（编辑模式必填）</span>
       <div
         onClick={() => ref.current?.click()}
-        className={`flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-black/10 bg-bg-100 transition hover:border-brand-violet/60 hover:bg-bg-200 ${
+        className={`flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-black/10 bg-bg-100 transition hover:border-brand-sky/60 hover:bg-bg-200 ${
           preview ? "border-solid border-black/5" : ""
         }`}
       >

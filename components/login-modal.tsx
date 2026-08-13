@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Mail, X, Loader2, User, Lock } from "lucide-react";
@@ -107,7 +107,7 @@ export function LoginModal({ open, onClose, onSuccess }: Props) {
       >
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[#F4F4F8]">
-            {mode === "login" ? "登录 StepPix" : "注册 StepPix"}
+            {mode === "login" ? "登录 PixSpring" : "注册 PixSpring"}
           </h2>
           <button
             type="button"
@@ -131,7 +131,7 @@ export function LoginModal({ open, onClose, onSuccess }: Props) {
               className={cn(
                 "rounded-lg py-2 text-sm font-medium transition",
                 mode === m
-                  ? "bg-brand-violet/30 text-[#F4F4F8]"
+                  ? "bg-brand-sky/30 text-[#F4F4F8]"
                   : "text-[#C7C7D1] hover:text-white",
               )}
             >

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Trash2, Download, Clock, Sparkles, Image as ImageIcon } from "lucide-react";
 import { ImageResult } from "@/lib/types";
@@ -47,7 +47,7 @@ export function Gallery({ items, onSelect, onDelete, activeId }: Props) {
           key={it.id}
           className={`group flex flex-col overflow-hidden rounded-xl border bg-white transition ${
             activeId === it.id
-              ? "border-brand-violet shadow-md"
+              ? "border-brand-sky shadow-md"
               : "border-black/5 hover:border-black/10 hover:shadow-sm"
           }`}
         >
@@ -82,10 +82,10 @@ export function Gallery({ items, onSelect, onDelete, activeId }: Props) {
             <div className="absolute inset-x-0 bottom-0 flex items-center justify-end gap-1.5 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
               <a
                 href={it.imageUrl}
-                download={`steppix-${it.id}.png`}
+                download={`PixSpring-${it.id}.png`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-md bg-black/50 p-1.5 text-white transition hover:bg-brand-violet/80"
+                className="rounded-md bg-black/50 p-1.5 text-white transition hover:bg-brand-sky/80"
                 aria-label="下载"
               >
                 <Download className="h-4 w-4" />

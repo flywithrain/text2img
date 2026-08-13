@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -71,7 +71,7 @@ export default function HistoryPage() {
       setTimeout(() => {
         const a = document.createElement("a");
         a.href = it.imageUrl;
-        a.download = `steppix-${it.id}.png`;
+        a.download = `PixSpring-${it.id}.png`;
         a.target = "_blank";
         a.click();
       }, i * 300);
@@ -83,10 +83,10 @@ export default function HistoryPage() {
       <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-black/5 bg-bg-50/80 backdrop-blur-xl">
         <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple shadow-lg shadow-brand-violet/30">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-sky to-brand-meadow shadow-lg shadow-brand-sky/30">
               <Wand2 className="h-5 w-5 text-white" />
             </span>
-            <span className="hidden text-lg font-bold tracking-tight text-ink-900 sm:inline">StepPix</span>
+            <span className="hidden text-lg font-bold tracking-tight text-ink-900 sm:inline">PixSpring</span>
             <span className="hidden text-xs text-ink-400 sm:inline">
               历史画廊
             </span>
@@ -104,7 +104,7 @@ export default function HistoryPage() {
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <HistoryIcon className="h-6 w-6 text-brand-violet" />
+            <HistoryIcon className="h-6 w-6 text-brand-sky" />
             <div>
               <h1 className="text-xl font-bold text-ink-900">历史画廊</h1>
               <p className="text-sm text-ink-400">
@@ -140,7 +140,7 @@ export default function HistoryPage() {
           </GlassCard>
         ) : loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-violet" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-sky" />
           </div>
         ) : (
           <GlassCard>

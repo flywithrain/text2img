@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+﻿import { Resend } from "resend";
 import { prisma } from "@/lib/db";
 import {
   generateOtpCode,
@@ -41,9 +41,9 @@ export async function sendOtpEmail(rawEmail: string): Promise<{ ok: true; cooldo
   }
 
   const { error } = await resend.emails.send({
-    from: `StepPix <${FROM}>`,
+    from: `PixSpring <${FROM}>`,
     to: email,
-    subject: "StepPix 注册验证码",
+    subject: "PixSpring 注册验证码",
     text: `您的注册验证码是：${code}\n\n${ttlMin} 分钟内有效，请勿泄露给他人。`,
     html: `<p>您的注册验证码是：</p><p style="font-size:24px;font-weight:bold;letter-spacing:4px">${code}</p><p>${ttlMin} 分钟内有效，请勿泄露给他人。</p>`,
   });

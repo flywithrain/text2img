@@ -1,9 +1,9 @@
 # OWASP Top 10 (2021) 安全扫描报告
 
-- **目标项目**：`text2img`（StepPix · AI 文生图，Next.js 14 App Router + Vercel）
+- **目标项目**：`pixspring`（PixSpring · AI 文生图，Next.js 14 App Router + Vercel）
 - **扫描方式**：针对源码的静态 + 逻辑层面人工审计（本环境镜像源不支持 `npm audit` 在线漏洞库查询，组件漏洞需在生产环境执行 `npm audit` 复核）
 - **扫描日期**：2026-07-08
-- **结论概述**：项目整体安全面良好，核心风险（API Key 泄露、注入、SSRF）均已规避。唯一需关注的真实风险是**代理接口缺少访问控制/限流**，可能导致部署者 StepFun 额度被他人滥用。
+- **结论概述**：项目整体安全面良好，核心风险（API Key 泄露、注入、SSRF）均已规避。唯一需关注的真实风险是**代理接口缺少访问控制/限流**，可能导致部署者 API 额度被他人滥用。
 
 | 类别 | 严重 | 高危 | 中危 | 低危 | 合计 |
 |------|------|------|------|------|------|
@@ -28,7 +28,7 @@
 - **文件**：`app/api/images/generations/route.ts`、`app/api/images/edits/route.ts`
 
 ### 漏洞分析
-两个代理接口在收到任意请求时，直接使用服务端环境变量 `STEP_API_KEY` 调用 StepFun 付费接口，接口本身**没有任何调用方身份校验或访问凭证**。任何知道站点地址的人都可无限调用，从而消耗部署者的 StepFun Step Plan 额度。
+两个代理接口在收到任意请求时，直接使用服务端环境变量 `IMAGE_API_KEY` 调用上游付费接口，接口本身**没有任何调用方身份校验或访问凭证**。任何知道站点地址的人都可无限调用，从而消耗部署者的 API 额度。
 
 ### 复现步骤
 ```text
@@ -49,8 +49,8 @@
 
 ## A02：加密失败（无风险）
 
-- `STEP_API_KEY` 仅从 `process.env` 读取（`lib/stepfun.ts`），未硬编码、未写入前端包。
-- 调用 StepFun 使用 `https://api.stepfun.com`（TLS）。
+- `IMAGE_API_KEY` 仅从 `process.env` 读取（`lib/image-api.ts`），未硬编码、未写入前端包。
+- 调用上游 API 使用 HTTPS（TLS）。
 - 错误处理中仅打印 `e?.message`，**未打印 API Key**（见 `route.ts` 的 `console.error("generate failed:", e?.message)`）。
 - 结论：无加密失败类问题。
 
@@ -110,7 +110,7 @@
 
 ## A10：服务端请求伪造 SSRF（无风险）
 
-- 服务端 `fetch` 的目标地址为硬编码常量 `https://api.stepfun.com/step_plan/v1/...`（`lib/stepfun.ts`），不接受任何用户可控的 URL 参数，不存在 SSRF。
+- 服务端 `fetch` 的目标地址为硬编码常量（`lib/image-api.ts`），不接受任何用户可控的 URL 参数，不存在 SSRF。
 
 ---
 

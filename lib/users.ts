@@ -15,6 +15,7 @@ export function toPublicUser(u: User): PublicUser {
     avatarUrl: u.avatarUrl,
     trustLevel: null,
     credits: u.credits,
+    isAdmin: u.isAdmin,
     lastCheckIn: u.lastCheckIn,
     createdAt: u.createdAt.toISOString(),
   };

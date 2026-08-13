@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -67,7 +67,7 @@ function LoginForm() {
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || (isRegister ? "注册失败" : "登录失败"));
-      window.dispatchEvent(new Event("steppix:user-refresh"));
+      window.dispatchEvent(new Event("PixSpring:user-refresh"));
       router.push(redirect);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "操作失败");
@@ -77,16 +77,16 @@ function LoginForm() {
   }
 
   const inputCls =
-    "w-full rounded-xl border border-black/10 bg-bg-50 pl-10 pr-4 py-3 text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-indigo/50 focus:ring-2 focus:ring-brand-indigo/15";
+    "w-full rounded-xl border border-black/10 bg-bg-50 pl-10 pr-4 py-3 text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-sky/50 focus:ring-2 focus:ring-brand-sky/15";
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-100 px-4 py-12">
       {/* 顶部 Logo */}
       <Link href="/" className="mb-8 flex items-center gap-2">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple shadow-lg shadow-brand-violet/30">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-sky to-brand-meadow shadow-lg shadow-brand-sky/30">
           <Wand2 className="h-5 w-5 text-white" />
         </span>
-        <span className="text-xl font-bold tracking-tight text-ink-900">StepPix</span>
+        <span className="text-xl font-bold tracking-tight text-ink-900">PixSpring</span>
       </Link>
 
       <div className="w-full max-w-[420px] rounded-2xl border border-black/5 bg-white p-8 shadow-[0_2px_24px_rgba(0,0,0,0.06)]">
@@ -168,7 +168,7 @@ function LoginForm() {
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
-                    className="w-full rounded-xl border border-black/10 bg-bg-50 pl-10 pr-4 py-3 tracking-widest text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-indigo/50 focus:ring-2 focus:ring-brand-indigo/15"
+                    className="w-full rounded-xl border border-black/10 bg-bg-50 pl-10 pr-4 py-3 tracking-widest text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-brand-sky/50 focus:ring-2 focus:ring-brand-sky/15"
                     placeholder="6 位数字"
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}

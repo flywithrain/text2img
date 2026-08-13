@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Download, Share2, Loader2, Sparkles } from "lucide-react";
 
@@ -14,7 +14,7 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
     if (!image) return;
     const a = document.createElement("a");
     a.href = image;
-    a.download = `steppix-${Date.now()}.png`;
+    a.download = `PixSpring-${Date.now()}.png`;
     a.target = "_blank";
     a.click();
   };
@@ -23,7 +23,7 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
     if (!image) return;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "StepPix 创作", text: prompt, url: image });
+        await navigator.share({ title: "PixSpring 创作", text: prompt, url: image });
         return;
       }
     } catch {
@@ -39,7 +39,7 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
   if (loading) {
     return (
       <div className="flex aspect-square w-full flex-col items-center justify-center gap-4 rounded-2xl border border-black/5 bg-bg-100">
-        <Loader2 className="h-10 w-10 animate-spin text-brand-violet" />
+        <Loader2 className="h-10 w-10 animate-spin text-brand-sky" />
         <p className="text-sm text-ink-500">
           {mode === "edit" ? "正在编辑图片…" : "AI 正在绘制你的画面…"}
         </p>
@@ -50,7 +50,7 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
   if (!image) {
     return (
       <div className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-black/10 bg-bg-200 text-center">
-        <Sparkles className="h-10 w-10 text-brand-violet/70" />
+        <Sparkles className="h-10 w-10 text-brand-sky/70" />
         <p className="px-6 text-sm text-ink-500">
           在左侧输入提示词并点击「开始生成」，<br />你的作品会在这里绽放。
         </p>

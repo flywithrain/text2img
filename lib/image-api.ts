@@ -1,8 +1,8 @@
-import { EditParams, GenerateRequest, STEP_MODEL } from "./types";
+﻿import { EditParams, GenerateRequest, IMAGE_MODEL } from "./types";
 
-const STEPFUN_BASE =
-  process.env.STEPFUN_BASE_URL ?? "https://api.stepfun.com/step_plan/v1";
-const TIMEOUT_MS = Number(process.env.STEPFUN_TIMEOUT_MS) || 60_000;
+const API_BASE =
+  process.env.IMAGE_API_BASE_URL ?? "https://api.stepfun.com/step_plan/v1";
+const TIMEOUT_MS = Number(process.env.IMAGE_API_TIMEOUT_MS) || 60_000;
 
 function extractB64(json: any): string {
   const b64 = json?.data?.[0]?.b64_json ?? json?.b64_json;
@@ -20,14 +20,14 @@ export async function generateImage(
   req: GenerateRequest,
   timeoutMs = TIMEOUT_MS,
 ): Promise<string> {
-  const apiKey = process.env.STEP_API_KEY;
-  if (!apiKey) throw new Error("服务端未配置 STEP_API_KEY");
+  const apiKey = process.env.IMAGE_API_KEY;
+  if (!apiKey) throw new Error("服务端未配置 API Key");
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(`${STEPFUN_BASE}/images/generations`, {
+    const res = await fetch(`${API_BASE}/images/generations`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -40,12 +40,12 @@ export async function generateImage(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`StepFun 返回 ${res.status}: ${text.slice(0, 300)}`);
+      throw new Error(`API 返回 ${res.status}: ${text.slice(0, 300)}`);
     }
     return extractB64(await res.json());
   } catch (e: any) {
     if (e?.name === "AbortError") throw new Error("请求超时（60s）");
-    if (isAuthError(e?.message ?? "")) throw new Error("鉴权失败：请检查 STEP_API_KEY 是否有效");
+    if (isAuthError(e?.message ?? "")) throw new Error("鉴权失败：请检查 API Key 是否有效");
     throw e;
   } finally {
     clearTimeout(timer);
@@ -56,15 +56,15 @@ export async function editImage(
   params: EditParams,
   timeoutMs = TIMEOUT_MS,
 ): Promise<string> {
-  const apiKey = process.env.STEP_API_KEY;
-  if (!apiKey) throw new Error("服务端未配置 STEP_API_KEY");
+  const apiKey = process.env.IMAGE_API_KEY;
+  if (!apiKey) throw new Error("服务端未配置 API Key");
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const form = new FormData();
-    form.append("model", STEP_MODEL);
+    form.append("model", IMAGE_MODEL);
     form.append("image", params.image);
     form.append("prompt", params.prompt);
     form.append("response_format", "b64_json");
@@ -77,7 +77,7 @@ export async function editImage(
     if (params.negative_prompt !== undefined && params.negative_prompt.trim())
       form.append("negative_prompt", params.negative_prompt.trim());
 
-    const res = await fetch(`${STEPFUN_BASE}/images/edits`, {
+    const res = await fetch(`${API_BASE}/images/edits`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -89,12 +89,12 @@ export async function editImage(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`StepFun 返回 ${res.status}: ${text.slice(0, 300)}`);
+      throw new Error(`API 返回 ${res.status}: ${text.slice(0, 300)}`);
     }
     return extractB64(await res.json());
   } catch (e: any) {
     if (e?.name === "AbortError") throw new Error("请求超时（60s）");
-    if (isAuthError(e?.message ?? "")) throw new Error("鉴权失败：请检查 STEP_API_KEY 是否有效");
+    if (isAuthError(e?.message ?? "")) throw new Error("鉴权失败：请检查 API Key 是否有效");
     throw e;
   } finally {
     clearTimeout(timer);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { editImage } from "@/lib/stepfun";
+import { editImage } from "@/lib/image-api";
 import {
   getSessionUserIdFromRequest,
   insufficientCredits,

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
@@ -63,7 +63,7 @@ export function ParamControls({ params, onChange, mode }: Props) {
           <select
             value={params.size}
             onChange={(e) => onChange({ size: e.target.value })}
-            className="w-full rounded-xl border border-black/10 bg-bg-50 px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-brand-indigo/50 focus:ring-2 focus:ring-brand-indigo/15"
+            className="w-full rounded-xl border border-black/10 bg-bg-50 px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-brand-sky/50 focus:ring-2 focus:ring-brand-sky/15"
           >
             {IMAGE_SIZES.map((s) => (
               <option key={s.value} value={s.value}>
@@ -81,7 +81,7 @@ export function ParamControls({ params, onChange, mode }: Props) {
             label="引导系数 (cfg_scale)"
             tip="Classifier-Free Guidance，控制生成结果对提示词的服从程度。值越高越严格贴合提示词，值越低越自由发散。推荐 1.0，范围 1.0–10.0。注意：大于 1.0 时负面提示词才会生效。"
           />
-          <span className="text-sm font-semibold text-brand-violet">
+          <span className="text-sm font-semibold text-brand-sky">
             {params.cfg_scale.toFixed(1)}
           </span>
         </div>

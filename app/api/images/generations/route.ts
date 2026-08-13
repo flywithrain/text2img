@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateImage } from "@/lib/stepfun";
-import { STEP_MODEL } from "@/lib/types";
+import { generateImage } from "@/lib/image-api";
+import { IMAGE_MODEL } from "@/lib/types";
 import {
   getSessionUserIdFromRequest,
   insufficientCredits,
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       : undefined;
 
   const payload = {
-    model: STEP_MODEL,
+    model: IMAGE_MODEL,
     prompt,
     response_format: "b64_json" as const,
     cfg_scale: cfgScale,
