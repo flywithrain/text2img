@@ -42,7 +42,11 @@ export async function readBlob(pathname: string): Promise<{
   const blob = await head(p);
   if (!blob?.url) throw new Error("blob url missing");
 
-  const res = await fetch(blob.url);
+  const res = await fetch(blob.url, {
+    headers: {
+      Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
+    },
+  });
   if (!res.ok) {
     throw new Error(`blob fetch ${res.status}: ${res.statusText}`);
   }
