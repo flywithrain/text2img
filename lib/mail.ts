@@ -49,7 +49,8 @@ export async function sendOtpEmail(rawEmail: string): Promise<{ ok: true; cooldo
   });
 
   if (error) {
-    throw new Error(`邮件发送失败：${error.message}`);
+    console.error("[mail] resend error:", error.message);
+    throw new Error("邮件发送失败，请稍后重试或联系管理员");
   }
 
   await prisma.otpCode.create({ data: { email, code, expiresAt } });
