@@ -1,4 +1,4 @@
-﻿"use client";
+﻿﻿"use client";
 
 import { Download, Share2, Loader2, Sparkles } from "lucide-react";
 

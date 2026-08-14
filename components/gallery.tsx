@@ -1,4 +1,4 @@
-﻿"use client";
+﻿﻿"use client";
 
 import { Trash2, Download, Clock, Sparkles, Image as ImageIcon } from "lucide-react";
 import { ImageResult } from "@/lib/types";

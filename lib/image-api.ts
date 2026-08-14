@@ -1,4 +1,4 @@
-﻿import { EditParams, GenerateRequest, IMAGE_MODEL } from "./types";
+﻿﻿import { EditParams, GenerateRequest, IMAGE_MODEL } from "./types";
 
 const API_BASE =
   process.env.IMAGE_API_BASE_URL ?? "https://api.stepfun.com/step_plan/v1";

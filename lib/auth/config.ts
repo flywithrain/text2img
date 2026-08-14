@@ -1,4 +1,4 @@
-﻿export function getSessionSecret(): string {
+﻿﻿export function getSessionSecret(): string {
   const secret = process.env.AUTH_SECRET ?? process.env.SESSION_SECRET;
   if (!secret || secret.length < 16) {
     throw new Error("未配置 AUTH_SECRET（至少 16 字符的随机串）");

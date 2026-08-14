@@ -7,18 +7,10 @@ function toProxyUrl(pathname: string): string {
 }
 
 function extractPathname(proxyUrl: string): string {
-  try {
-    let p: string;
-    if (proxyUrl.startsWith("/api/blob?path=")) {
-      p = decodeURIComponent(proxyUrl.replace("/api/blob?path=", ""));
-    } else {
-      // 兼容旧数据（可能是完整的 Blob URL 或 pathname）
-      p = proxyUrl;
-    }
-    return p.startsWith("/") ? p : `/${p}`;
-  } catch {
-    return proxyUrl.startsWith("/") ? proxyUrl : `/${proxyUrl}`;
+  if (proxyUrl.startsWith("/api/blob?path=")) {
+    return decodeURIComponent(proxyUrl.replace("/api/blob?path=", ""));
   }
+  return proxyUrl;
 }
 
 export async function uploadImage(
@@ -35,7 +27,7 @@ export async function uploadImage(
 
 export async function deleteImage(proxyUrl: string): Promise<void> {
   try {
-    const pathname = extractPathname(proxyUrl);
+    const pathname = extractPathname(proxyUrl).replace(/^\//, "");
     await del(pathname);
   } catch (e) {
     console.error("blob delete failed:", e);
@@ -46,7 +38,8 @@ export async function readBlob(pathname: string): Promise<{
   body: ReadableStream<Uint8Array> | null;
   contentType: string | null;
 }> {
-  const blob = await head(pathname);
+  const p = pathname.replace(/^\//, "");
+  const blob = await head(p);
   if (!blob?.url) throw new Error("blob url missing");
 
   const res = await fetch(blob.url);

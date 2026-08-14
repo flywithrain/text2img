@@ -1,4 +1,4 @@
-﻿import { Resend } from "resend";
+﻿﻿import { Resend } from "resend";
 import { prisma } from "@/lib/db";
 import {
   generateOtpCode,
