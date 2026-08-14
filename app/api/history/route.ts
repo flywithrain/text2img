@@ -10,12 +10,22 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const userId = getSessionUserIdFromRequest(req);
-  if (!userId) return unauthorized();
+  const myId = getSessionUserIdFromRequest(req);
+  if (!myId) return unauthorized();
 
   const { searchParams } = req.nextUrl;
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 100));
   const cursor = searchParams.get("cursor");
+  const targetUserId = searchParams.get("userId");
+
+  let userId = myId;
+  if (targetUserId && targetUserId !== myId) {
+    const me = await prisma.user.findUnique({ where: { id: myId } });
+    if (!me?.isAdmin) {
+      return NextResponse.json({ error: "无权限" }, { status: 403 });
+    }
+    userId = targetUserId;
+  }
 
   const rows = await prisma.generation.findMany({
     where: { userId },
@@ -51,8 +61,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const userId = getSessionUserIdFromRequest(req);
-  if (!userId) return unauthorized();
+  const myId = getSessionUserIdFromRequest(req);
+  if (!myId) return unauthorized();
 
   const { searchParams } = req.nextUrl;
   const id = searchParams.get("id");
@@ -60,7 +70,9 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "缺少 id" }, { status: 400 });
   }
 
-  const row = await prisma.generation.findFirst({ where: { id, userId } });
+  const me = await prisma.user.findUnique({ where: { id: myId } });
+  const where = me?.isAdmin ? { id } : { id, userId: myId };
+  const row = await prisma.generation.findFirst({ where });
   if (!row) {
     return NextResponse.json({ error: "记录不存在" }, { status: 404 });
   }

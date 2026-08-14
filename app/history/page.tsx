@@ -1,7 +1,8 @@
-﻿﻿"use client";
+﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Wand2,
@@ -10,26 +11,41 @@ import {
   Loader2,
   History as HistoryIcon,
   LogIn,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Gallery } from "@/components/gallery";
 import { ImageResult } from "@/lib/types";
-import { notifyUserRefresh } from "@/components/auth-button";
 
-export default function HistoryPage() {
+function HistoryView() {
+  const searchParams = useSearchParams();
+  const targetUserId = searchParams.get("userId");
+
   const [items, setItems] = useState<ImageResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(true);
+  const [forbidden, setForbidden] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const apiPath = targetUserId
+    ? `/api/history?limit=100&userId=${encodeURIComponent(targetUserId)}`
+    : "/api/history?limit=100";
+
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    setForbidden(false);
     try {
-      const res = await fetch("/api/history?limit=100", { cache: "no-store" });
+      const res = await fetch(apiPath, { cache: "no-store" });
       if (res.status === 401) {
         setLoggedIn(false);
+        setItems([]);
+        return;
+      }
+      if (res.status === 403) {
+        setForbidden(true);
         setItems([]);
         return;
       }
@@ -42,7 +58,7 @@ export default function HistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [apiPath]);
 
   useEffect(() => {
     void load();
@@ -78,6 +94,8 @@ export default function HistoryPage() {
     });
   }
 
+  const viewingOther = !!targetUserId;
+
   return (
     <div className="min-h-screen">
       <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-black/5 bg-bg-50/80 backdrop-blur-xl">
@@ -88,27 +106,47 @@ export default function HistoryPage() {
             </span>
             <span className="hidden text-lg font-bold tracking-tight text-ink-900 sm:inline">PixSpring</span>
             <span className="hidden text-xs text-ink-400 sm:inline">
-              历史画廊
+              {viewingOther ? "用户生图历史" : "历史画廊"}
             </span>
           </div>
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 rounded-xl border border-black/5 bg-bg-100 px-3 py-2 text-sm font-medium text-ink-500 transition hover:bg-bg-200 hover:text-ink-900"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            返回首页
-          </Link>
+          {viewingOther ? (
+            <Link
+              href="/admin"
+              className="flex items-center gap-1.5 rounded-xl border border-black/5 bg-bg-100 px-3 py-2 text-sm font-medium text-ink-500 transition hover:bg-bg-200 hover:text-ink-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              返回管理
+            </Link>
+          ) : (
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 rounded-xl border border-black/5 bg-bg-100 px-3 py-2 text-sm font-medium text-ink-500 transition hover:bg-bg-200 hover:text-ink-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              返回首页
+            </Link>
+          )}
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <HistoryIcon className="h-6 w-6 text-brand-sky" />
+            {viewingOther ? (
+              <Shield className="h-6 w-6 text-brand-sky" />
+            ) : (
+              <HistoryIcon className="h-6 w-6 text-brand-sky" />
+            )}
             <div>
-              <h1 className="text-xl font-bold text-ink-900">历史画廊</h1>
+              <h1 className="text-xl font-bold text-ink-900">
+                {viewingOther ? "用户生图历史" : "历史画廊"}
+              </h1>
               <p className="text-sm text-ink-400">
-                {loading ? "加载中…" : `${items.length} / 100 张 · 点击下载或删除`}
+                {loading
+                  ? "加载中…"
+                  : viewingOther
+                    ? `${items.length} 张 · 管理员查看`
+                    : `${items.length} / 100 张 · 点击下载或删除`}
               </p>
             </div>
           </div>
@@ -126,7 +164,17 @@ export default function HistoryPage() {
           </div>
         ) : null}
 
-        {!loggedIn ? (
+        {forbidden ? (
+          <GlassCard>
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+              <Shield className="h-10 w-10 text-ink-300" />
+              <p className="text-sm text-ink-500">无权限查看该用户的历史记录</p>
+              <Link href="/admin">
+                <Button variant="primary">返回用户管理</Button>
+              </Link>
+            </div>
+          </GlassCard>
+        ) : !loggedIn ? (
           <GlassCard>
             <div className="flex flex-col items-center gap-4 py-16 text-center">
               <LogIn className="h-10 w-10 text-ink-300" />
@@ -150,12 +198,28 @@ export default function HistoryPage() {
             />
             {items.length > 0 ? (
               <p className="mt-4 border-t border-black/5 pt-4 text-center text-xs text-ink-400">
-                每用户最多保留 100 张，超出后自动删除最早的记录
+                {viewingOther
+                  ? `共 ${items.length} 张历史记录`
+                  : "每用户最多保留 100 张，超出后自动删除最早的记录"}
               </p>
             ) : null}
           </GlassCard>
         )}
       </main>
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-sky" />
+        </div>
+      }
+    >
+      <HistoryView />
+    </Suspense>
   );
 }

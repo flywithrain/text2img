@@ -1,4 +1,4 @@
-﻿﻿"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,21 +7,17 @@ import {
   Wand2,
   Shield,
   Loader2,
-  Mail,
   User as UserIcon,
   Coins,
-  Image as ImageIcon,
-  CalendarDays,
   ChevronRight,
   LogIn,
+  Check,
   X,
-  Download,
+  Pencil,
 } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { AuthButton } from "@/components/auth-button";
-import { Gallery } from "@/components/gallery";
-import type { ImageResult } from "@/lib/types";
 
 interface AdminUser {
   id: string;
@@ -39,19 +35,16 @@ export default function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [userImages, setUserImages] = useState<ImageResult[]>([]);
-  const [imagesLoading, setImagesLoading] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [creditValue, setCreditValue] = useState("");
+  const [savingCredits, setSavingCredits] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/users", { cache: "no-store" });
-      if (res.status === 403) {
-        setForbidden(true);
-        return;
-      }
-      if (res.status === 401) {
+      if (res.status === 403 || res.status === 401) {
         setForbidden(true);
         return;
       }
@@ -69,27 +62,45 @@ export default function AdminPage() {
     void load();
   }, [load]);
 
-  async function viewUserImages(user: AdminUser) {
-    setSelectedUser(user);
-    setUserImages([]);
-    setImagesLoading(true);
-    try {
-      const res = await fetch(`/api/admin/users/${user.id}/generations`, {
-        cache: "no-store",
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "加载失败");
-      setUserImages(json.items ?? []);
-    } catch (e: any) {
-      setError(e?.message || "加载失败");
-    } finally {
-      setImagesLoading(false);
-    }
+  function startEdit(u: AdminUser) {
+    setEditingId(u.id);
+    setCreditValue(String(u.credits));
+    setError(null);
   }
 
-  function closeUserImages() {
-    setSelectedUser(null);
-    setUserImages([]);
+  function cancelEdit() {
+    setEditingId(null);
+    setCreditValue("");
+  }
+
+  async function saveCredits(userId: string) {
+    const credits = Number(creditValue);
+    if (!Number.isFinite(credits) || credits < 0) {
+      setError("积分必须为非负整数");
+      return;
+    }
+    setSavingCredits(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credits: Math.floor(credits) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "保存失败");
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, credits: json.credits } : u,
+        ),
+      );
+      setEditingId(null);
+      setCreditValue("");
+    } catch (e: any) {
+      setError(e?.message || "保存失败");
+    } finally {
+      setSavingCredits(false);
+    }
   }
 
   if (forbidden) {
@@ -126,7 +137,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-bg-100">
-      {/* 顶部导航 */}
       <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-black/5 bg-bg-50/80 backdrop-blur-xl">
         <div className="mx-auto flex h-full max-w-5xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
@@ -157,7 +167,6 @@ export default function AdminPage() {
           </div>
         ) : (
           <>
-            {/* 统计 */}
             <div className="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
               <GlassCard className="p-4">
                 <p className="text-xs text-ink-400">总用户数</p>
@@ -190,7 +199,6 @@ export default function AdminPage() {
               </GlassCard>
             </div>
 
-            {/* 用户列表 */}
             <GlassCard>
               <h2 className="mb-4 text-sm font-semibold text-ink-900">用户列表</h2>
               <div className="overflow-x-auto">
@@ -226,8 +234,56 @@ export default function AdminPage() {
                         <td className="py-3 pr-4 text-ink-500">
                           {u.email || "—"}
                         </td>
-                        <td className="py-3 pr-4 text-right tabular-nums text-amber-600">
-                          {u.credits}
+                        <td className="py-3 pr-4 text-right">
+                          {editingId === u.id ? (
+                            <div className="flex items-center justify-end gap-1">
+                              <input
+                                type="number"
+                                min={0}
+                                value={creditValue}
+                                onChange={(e) => setCreditValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") void saveCredits(u.id);
+                                  if (e.key === "Escape") cancelEdit();
+                                }}
+                                disabled={savingCredits}
+                                className="w-20 rounded-lg border border-brand-sky/40 px-2 py-1 text-right text-sm tabular-nums outline-none focus:ring-2 focus:ring-brand-sky/20"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => void saveCredits(u.id)}
+                                disabled={savingCredits}
+                                className="rounded p-1 text-emerald-600 transition hover:bg-emerald-50"
+                              >
+                                {savingCredits ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Check className="h-4 w-4" />
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelEdit}
+                                disabled={savingCredits}
+                                className="rounded p-1 text-ink-400 transition hover:bg-bg-100 hover:text-ink-900"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="flex items-center justify-end gap-1.5 tabular-nums text-amber-600">
+                              {u.credits}
+                              <button
+                                type="button"
+                                onClick={() => startEdit(u)}
+                                className="text-ink-300 transition hover:text-brand-sky"
+                                title="调整积分"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 pr-4 text-right tabular-nums text-ink-700">
                           {u.generationCount}
@@ -237,14 +293,13 @@ export default function AdminPage() {
                         </td>
                         <td className="py-3">
                           {u.generationCount > 0 ? (
-                            <button
-                              type="button"
-                              onClick={() => viewUserImages(u)}
+                            <Link
+                              href={`/history?userId=${encodeURIComponent(u.id)}`}
                               className="flex items-center gap-1 text-xs text-brand-sky transition hover:text-brand-sky"
                             >
                               查看 {u.generationCount} 张
                               <ChevronRight className="h-3 w-3" />
-                            </button>
+                            </Link>
                           ) : (
                             <span className="text-xs text-ink-300">—</span>
                           )}
@@ -258,49 +313,6 @@ export default function AdminPage() {
           </>
         )}
       </main>
-
-      {/* 用户图片弹窗 */}
-      {selectedUser ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-black/5 p-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-sky/15">
-                  <ImageIcon className="h-5 w-5 text-brand-sky" />
-                </span>
-                <div>
-                  <p className="font-semibold text-ink-900">
-                    {selectedUser.username} 的生图历史
-                  </p>
-                  <p className="text-xs text-ink-400">
-                    {selectedUser.email || selectedUser.username} · {userImages.length} 张
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={closeUserImages}
-                className="rounded-lg p-2 text-ink-400 transition hover:bg-bg-100 hover:text-ink-900"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="overflow-y-auto p-4">
-              {imagesLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-brand-sky" />
-                </div>
-              ) : userImages.length > 0 ? (
-                <Gallery items={userImages} onDelete={() => {}} />
-              ) : (
-                <p className="py-12 text-center text-sm text-ink-400">
-                  该用户暂无生图记录
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

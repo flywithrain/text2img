@@ -55,7 +55,7 @@ export default function ProfilePage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "签到失败");
       setUser(json.user);
-      setMessage(`签到成功！获得 ${json.gained} 次生图机会`);
+      setMessage(`签到成功！获得 ${json.gained} 积分`);
       window.dispatchEvent(new Event("PixSpring:user-refresh"));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "签到失败");
