@@ -1,8 +1,8 @@
-﻿﻿"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { LogIn, LogOut, User as UserIcon, ChevronDown, History as HistoryIcon, Shield } from "lucide-react";
+import { LogIn, LogOut, User as UserIcon, ChevronDown, History as HistoryIcon, Shield, Boxes } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PublicUser } from "@/lib/user-types";
 
@@ -131,6 +131,16 @@ export function AuthButton() {
               >
                 <Shield className="h-4 w-4" />
                 用户管理
+              </Link>
+            ) : null}
+            {user.isAdmin ? (
+              <Link
+                href="/admin/models"
+                className="flex items-center gap-2 px-3 py-2.5 text-sm text-ink-900 transition hover:bg-bg-100"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Boxes className="h-4 w-4" />
+                模型管理
               </Link>
             ) : null}
             <button

@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
     mode: r.mode as "generation" | "edit",
     prompt: r.prompt,
     imageUrl: r.imageUrl,
+    modelName: r.modelName ?? undefined,
     createdAt: r.createdAt.getTime(),
     seed: r.seed ?? undefined,
     cfgScale: r.cfgScale ?? undefined,

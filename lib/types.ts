@@ -1,7 +1,16 @@
 export type ImageMode = "generation" | "edit";
 
-export const IMAGE_MODEL =
-  (process.env.IMAGE_MODEL_NAME as string) || "step-image-edit-2";
+/** provider 适配器类型（与 lib/image-api.ts 保持一致） */
+export type ModelProvider = "stepfun" | "openai" | "gemini";
+
+/** 前端可见的模型信息（不含 apiKey） */
+export interface ModelOption {
+  id: string;
+  name: string;
+  provider: ModelProvider;
+  model: string;
+  isDefault: boolean;
+}
 
 export const IMAGE_SIZES = [
   { label: "方形 1024×1024", value: "1024x1024" },
@@ -12,7 +21,7 @@ export const IMAGE_SIZES = [
 ] as const;
 
 export interface GenerateRequest {
-  model: typeof IMAGE_MODEL;
+  model: string;
   prompt: string;
   response_format: "b64_json";
   cfg_scale?: number;
@@ -31,6 +40,7 @@ export interface EditParams {
   seed?: number;
   text_mode?: boolean;
   negative_prompt?: string;
+  size?: string;
 }
 
 export interface ImageResult {
@@ -39,4 +49,6 @@ export interface ImageResult {
   prompt: string;
   imageUrl: string;
   createdAt: number;
+  /** 生成时使用的模型显示名 */
+  modelName?: string;
 }

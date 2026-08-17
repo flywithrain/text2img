@@ -56,10 +56,32 @@ model Generation {
   prompt    String
   /// Vercel Blob 公开访问 URL
   imageUrl  String
+  /// 生成时使用的模型显示名（快照，模型删除后仍保留）
+  modelName String?
   seed      Int?
   cfgScale  Float?
   steps     Int?
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+/// 生图模型配置（管理员在界面维护，密钥仅存服务端）
+model ImageModel {
+  id        String   @id @default(cuid())
+  /// 显示名，如 "Grok 图像"
+  name      String   @unique
+  /// 适配器类型：stepfun | openai | gemini
+  provider  String
+  /// 模型标识，如 grok-2-image / gpt-image-1 / gemini-2.5-flash-image
+  model     String
+  /// API 根地址
+  baseUrl   String
+  /// API 密钥（绝不返回给前端）
+  apiKey    String
+  enabled   Boolean  @default(true)
+  /// 是否为默认模型（全局最多一个）
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

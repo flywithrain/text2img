@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateImage } from "@/lib/image-api";
-import { IMAGE_MODEL } from "@/lib/types";
+import { generateImage, resolveModel } from "@/lib/image-api";
 import {
   getSessionUserIdFromRequest,
   insufficientCredits,
@@ -50,20 +49,28 @@ export async function POST(req: NextRequest) {
       ? body.negative_prompt.trim().slice(0, 512)
       : undefined;
 
-  const payload = {
-    model: IMAGE_MODEL,
-    prompt,
-    response_format: "b64_json" as const,
-    cfg_scale: cfgScale,
-    steps,
-    seed,
-    size,
-    text_mode: body.text_mode === true || body.text_mode === "true",
-    negative_prompt: negativePrompt,
-  };
+  const modelId =
+    typeof body.modelId === "string" && body.modelId ? body.modelId : undefined;
 
   try {
-    const b64 = await generateImage(payload);
+    const model = await resolveModel(modelId);
+
+    const payload = {
+      model: model.model,
+      prompt,
+      response_format: "b64_json" as const,
+      cfg_scale: model.provider === "stepfun" ? cfgScale : undefined,
+      steps: model.provider === "stepfun" ? steps : undefined,
+      seed: model.provider === "stepfun" ? seed : undefined,
+      size: model.provider === "gemini" ? undefined : size,
+      text_mode:
+        model.provider === "stepfun"
+          ? body.text_mode === true || body.text_mode === "true"
+          : undefined,
+      negative_prompt: model.provider === "stepfun" ? negativePrompt : undefined,
+    };
+
+    const b64 = await generateImage(payload, model);
 
     const imageUrl = await uploadImage(
       b64,
@@ -77,6 +84,7 @@ export async function POST(req: NextRequest) {
           mode: "generation",
           prompt,
           imageUrl,
+          modelName: model.name,
           seed: seed ?? null,
           cfgScale: cfgScale ?? null,
           steps: steps ?? null,
@@ -108,6 +116,7 @@ export async function POST(req: NextRequest) {
         imageUrl,
         id: gen.id,
         createdAt: gen.createdAt.getTime(),
+        modelName: model.name,
         credits: updated.credits,
       },
       { headers: { "Cache-Control": "no-store" } },

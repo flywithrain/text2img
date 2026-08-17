@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, Image as ImageIcon, Wand2, AlertCircle, Compass, Braces, Calculator } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -9,7 +9,7 @@ import { ParamControls, GenParams } from "@/components/param-controls";
 import { ImageUpload } from "@/components/image-upload";
 import { ImageResultView } from "@/components/image-result";
 import { AuthButton, notifyUserRefresh } from "@/components/auth-button";
-import { ImageResult } from "@/lib/types";
+import { ImageResult, ModelOption } from "@/lib/types";
 
 const DEFAULT_PARAMS: GenParams = {
   cfg_scale: 1.0,
@@ -28,6 +28,23 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImageResult | null>(null);
+  const [models, setModels] = useState<ModelOption[]>([]);
+  const [modelId, setModelId] = useState("");
+
+  useEffect(() => {
+    fetch("/api/models", { cache: "no-store" })
+      .then(async (res) => {
+        if (res.status === 401) return { items: [] };
+        const json = await res.json();
+        return { items: (json.items ?? []) as ModelOption[] };
+      })
+      .then(({ items }) => {
+        setModels(items);
+        const preferred = items.find((m) => m.isDefault) ?? items[0];
+        if (preferred) setModelId(preferred.id);
+      })
+      .catch(() => setModels([]));
+  }, []);
 
   const handleParams = (next: Partial<GenParams>) =>
     setParams((p) => ({ ...p, ...next }));
@@ -47,6 +64,7 @@ export default function Home() {
       let imageUrl: string;
       let id: string;
       let createdAt: number;
+      let modelName: string | undefined;
 
       if (mode === "generation") {
         const res = await fetch("/api/images/generations", {
@@ -54,6 +72,7 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             prompt: prompt.trim(),
+            modelId: modelId || undefined,
             cfg_scale: params.cfg_scale,
             steps: params.steps,
             seed: params.seed || undefined,
@@ -74,6 +93,7 @@ export default function Home() {
         imageUrl = json.imageUrl;
         id = json.id;
         createdAt = json.createdAt ?? Date.now();
+        modelName = json.modelName;
         if (typeof json.credits === "number") notifyUserRefresh();
       } else {
         if (!imageFile) {
@@ -84,6 +104,7 @@ export default function Home() {
         const fd = new FormData();
         fd.append("prompt", prompt.trim());
         fd.append("image", imageFile);
+        if (modelId) fd.append("modelId", modelId);
         fd.append("cfg_scale", String(params.cfg_scale));
         fd.append("steps", String(params.steps));
         if (params.seed) fd.append("seed", String(params.seed));
@@ -106,6 +127,7 @@ export default function Home() {
         imageUrl = json.imageUrl;
         id = json.id;
         createdAt = json.createdAt ?? Date.now();
+        modelName = json.modelName;
         if (typeof json.credits === "number") notifyUserRefresh();
       }
 
@@ -115,6 +137,7 @@ export default function Home() {
         prompt: prompt.trim(),
         imageUrl,
         createdAt,
+        modelName,
       };
       setResult(item);
     } catch (e: any) {
@@ -213,7 +236,14 @@ export default function Home() {
               <h2 className="mb-4 text-sm font-semibold text-ink-900">
                 高级参数
               </h2>
-              <ParamControls params={params} onChange={handleParams} mode={mode} />
+              <ParamControls
+                params={params}
+                onChange={handleParams}
+                mode={mode}
+                models={models}
+                modelId={modelId}
+                onModelChange={setModelId}
+              />
             </GlassCard>
 
             {/* 错误提示 */}

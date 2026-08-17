@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { editImage } from "@/lib/image-api";
+import { editImage, resolveModel } from "@/lib/image-api";
 import {
   getSessionUserIdFromRequest,
   insufficientCredits,
@@ -53,15 +53,25 @@ export async function POST(req: NextRequest) {
     (form.get("negative_prompt") as string | null)?.trim().slice(0, 512) || undefined;
 
   try {
-    const b64 = await editImage({
-      prompt,
-      image,
-      cfg_scale: cfgScale,
-      steps: steps !== undefined ? Math.round(steps) : undefined,
-      seed: seed !== undefined ? Math.round(seed) : undefined,
-      text_mode: form.get("text_mode") === "true" || form.get("text_mode") === "on",
-      negative_prompt: negativePrompt,
-    });
+    const model = await resolveModel(
+      (form.get("modelId") as string | null) || undefined,
+    );
+
+    const isStepfun = model.provider === "stepfun";
+    const b64 = await editImage(
+      {
+        prompt,
+        image,
+        cfg_scale: isStepfun ? cfgScale : undefined,
+        steps: isStepfun && steps !== undefined ? Math.round(steps) : undefined,
+        seed: isStepfun && seed !== undefined ? Math.round(seed) : undefined,
+        text_mode: isStepfun
+          ? form.get("text_mode") === "true" || form.get("text_mode") === "on"
+          : undefined,
+        negative_prompt: isStepfun ? negativePrompt : undefined,
+      },
+      model,
+    );
 
     const imageUrl = await uploadImage(
       b64,
@@ -75,6 +85,7 @@ export async function POST(req: NextRequest) {
           mode: "edit",
           prompt,
           imageUrl,
+          modelName: model.name,
           seed: seed !== undefined ? Math.round(seed) : null,
           cfgScale: cfgScale ?? null,
           steps: steps !== undefined ? Math.round(steps) : null,
@@ -106,6 +117,7 @@ export async function POST(req: NextRequest) {
         imageUrl,
         id: gen.id,
         createdAt: gen.createdAt.getTime(),
+        modelName: model.name,
         credits: updated.credits,
       },
       { headers: { "Cache-Control": "no-store" } },
