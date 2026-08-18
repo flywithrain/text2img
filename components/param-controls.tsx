@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { HelpCircle, Sparkles } from "lucide-react";
@@ -108,7 +108,7 @@ export function ParamControls({
           <div className="mb-2">
             <ParamLabel
               label="图片尺寸 (size)"
-              tip="输出图片的分辨率。格式为高×宽。方形适合头像/图标，竖版适合手机壁纸/海报，横版适合桌面壁纸/横幅。"
+              tip="输出图片的分辨率（宽×高）。方形适合头像/图标，竖版适合手机壁纸/海报，横版适合桌面壁纸/横幅。"
             />
           </div>
           <select

@@ -1,6 +1,6 @@
-﻿﻿"use client";
+﻿"use client";
 
-import { Download, Share2, Loader2, Sparkles } from "lucide-react";
+import { Download, Loader2, Sparkles } from "lucide-react";
 
 interface Props {
   image: string | null; // data URL 或 Blob URL
@@ -17,23 +17,6 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
     a.download = `PixSpring-${Date.now()}.png`;
     a.target = "_blank";
     a.click();
-  };
-
-  const handleShare = async () => {
-    if (!image) return;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: "PixSpring 创作", text: prompt, url: image });
-        return;
-      }
-    } catch {
-      /* 用户取消或不支持 */
-    }
-    try {
-      await navigator.clipboard.writeText(prompt);
-    } catch {
-      /* 忽略 */
-    }
   };
 
   if (loading) {
@@ -73,13 +56,6 @@ export function ImageResultView({ image, loading, prompt, mode }: Props) {
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-black/10 bg-bg-100 px-4 py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-bg-200"
         >
           <Download className="h-4 w-4" /> 下载
-        </button>
-        <button
-          type="button"
-          onClick={handleShare}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-black/10 bg-bg-100 px-4 py-2.5 text-sm font-semibold text-ink-900 transition hover:bg-bg-200"
-        >
-          <Share2 className="h-4 w-4" /> 分享
         </button>
       </div>
     </div>

@@ -11,6 +11,20 @@ import { uploadImage, deleteImage, MAX_HISTORY } from "@/lib/blob";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/**
+ * size 统一按「宽x高」传入；stepfun 接口实际按「高x宽」解析，需要交换，
+ * openai 兼容接口原生就是「宽x高」，gemini 不支持 size。
+ */
+function sizeForProvider(
+  size: string | undefined,
+  provider: string,
+): string | undefined {
+  if (!size || provider === "gemini") return undefined;
+  if (provider !== "stepfun") return size;
+  const m = /^(\d+)x(\d+)$/.exec(size);
+  return m ? `${m[2]}x${m[1]}` : size;
+}
+
 function clamp(v: number, min: number, max: number) {
   return Math.min(max, Math.max(min, v));
 }
@@ -62,7 +76,7 @@ export async function POST(req: NextRequest) {
       cfg_scale: model.provider === "stepfun" ? cfgScale : undefined,
       steps: model.provider === "stepfun" ? steps : undefined,
       seed: model.provider === "stepfun" ? seed : undefined,
-      size: model.provider === "gemini" ? undefined : size,
+      size: sizeForProvider(size, model.provider),
       text_mode:
         model.provider === "stepfun"
           ? body.text_mode === true || body.text_mode === "true"
